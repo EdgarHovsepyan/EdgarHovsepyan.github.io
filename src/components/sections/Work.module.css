@@ -1,0 +1,141 @@
+.section {
+  position: relative;
+  z-index: 2;
+}
+
+.viewport {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(90px, 12vh, 140px) 0 clamp(40px, 6vh, 70px);
+}
+
+.header {
+  max-width: var(--shell);
+  width: 100%;
+  margin: 0 auto clamp(28px, 4vw, 52px);
+  padding: 0 var(--gutter);
+}
+
+.track {
+  display: flex;
+  gap: clamp(18px, 2.5vw, 32px);
+  padding: 0 var(--gutter);
+  width: max-content;
+  will-change: transform;
+}
+
+.panel {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(320px, 60vw, 600px);
+  height: clamp(380px, 58vh, 560px);
+  display: flex;
+  flex-direction: column;
+  padding: clamp(28px, 3vw, 44px);
+  border-radius: 22px;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(160deg, rgba(20, 20, 26, 0.92), rgba(12, 12, 16, 0.72));
+  overflow: hidden;
+}
+
+.panelTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+}
+
+.panelNo {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.panelCount {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.panelTitle {
+  margin: auto 0 0;
+  font-family: var(--font-cond);
+  font-size: clamp(30px, 4vw, 56px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+}
+
+.panelDesc {
+  margin-top: 18px;
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 460px;
+  text-wrap: pretty;
+}
+
+.panelTags {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.panelGlow {
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(77, 124, 255, 0.16), transparent 65%);
+  pointer-events: none;
+}
+
+@media (max-width: 879px) {
+  .viewport {
+    min-height: 0;
+    overflow: visible;
+    padding: clamp(60px, 10vw, 90px) 0;
+  }
+
+  .track {
+    flex-direction: column;
+    width: auto;
+    gap: 18px;
+  }
+
+  .panel {
+    width: auto;
+    height: auto;
+    min-height: 300px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    min-height: 0;
+    overflow: visible;
+    padding: clamp(60px, 10vw, 90px) 0;
+  }
+
+  .track {
+    flex-direction: column;
+    width: auto;
+    gap: 18px;
+    transform: none !important;
+  }
+
+  .panel {
+    width: auto;
+    height: auto;
+    min-height: 300px;
+  }
+}

@@ -1,0 +1,117 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(20px + var(--sat)) calc(var(--gutter) + var(--sar)) 20px calc(var(--gutter) + var(--sal));
+  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(7, 7, 10, 0.78), rgba(7, 7, 10, 0));
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.brand {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.monogram {
+  font-family: var(--font-arm);
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--text-soft);
+  text-transform: uppercase;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.link {
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: color 0.25s;
+}
+
+.link:hover {
+  color: var(--text);
+}
+
+.available {
+  position: relative;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 19px;
+  border-radius: 100px;
+  border: 1px solid rgba(91, 228, 155, 0.4);
+  background: rgba(91, 228, 155, 0.06);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-green-soft);
+  transition: transform 0.35s var(--ease);
+}
+
+.status {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+}
+
+.status::before,
+.status::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent-green);
+}
+
+.status::after {
+  animation: ring 2.4s ease-out infinite;
+}
+
+@media (max-width: 820px) {
+  .links {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .name {
+    display: none;
+  }
+
+  .available {
+    padding: 10px 15px;
+  }
+}

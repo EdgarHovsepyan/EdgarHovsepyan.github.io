@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /d/portfolio 2>/dev/null | head -50)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(python -c \"import reportlab; print\\('reportlab', reportlab.Version\\)\")",
+      "Bash(python -c \"import fpdf; print\\('fpdf ok'\\)\")",
+      "Bash(pip --version)",
+      "Bash(cp \"/d/portfolio/Edgar_Hovsepyan_CV_2026.pdf\" \"/d/portfolio/Edgar_Hovsepyan_Resume.pdf\")",
+      "Read(//d/portfolio/**)",
+      "Bash('/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe' --headless=new --disable-gpu --no-pdf-header-footer --user-data-dir=C:/Users/edgar/AppData/Local/Temp/claude/edge-cv-profile --virtual-time-budget=4000 --print-to-pdf=D:/portfolio/Edgar_Hovsepyan_CV_2026_premium.pdf file:///D:/portfolio/cv-print-premium.html)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(EDGE=\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" *)"
+    ]
+  }
+}

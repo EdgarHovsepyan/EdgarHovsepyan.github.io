@@ -1,0 +1,146 @@
+:root {
+  --bg: #07070a;
+  --bg-elevated: rgba(11, 11, 15, 0.5);
+
+  --text: #f4f4f5;
+  --text-secondary: #d7d7dd;
+  --text-tertiary: #b8b8c0;
+  --text-muted: #9a9aa3;
+  --text-muted-2: #84848d;
+  --text-muted-3: #75757e;
+  --text-faint: #5a5a63;
+  --text-faintest: #4a4a52;
+  --text-soft: #86868f;
+
+  --accent: #4d7cff;
+  --accent-cyan: #22d3ee;
+  --accent-green: #5be49b;
+  --accent-green-soft: #9dedc2;
+  --accent-blue-soft: #9fb8ff;
+  --accent-blue-chip: #cbd8ff;
+  --gold: #e5c07b;
+
+  --line: rgba(255, 255, 255, 0.06);
+  --line-soft: rgba(255, 255, 255, 0.05);
+  --line-strong: rgba(255, 255, 255, 0.08);
+
+  --font-sans: 'Saira', sans-serif;
+  --font-cond: 'Saira Condensed', sans-serif;
+  --font-serif: 'Instrument Serif', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-arm: 'Noto Sans Armenian', 'Saira Condensed', sans-serif;
+
+  --shell: 1500px;
+  --gutter: clamp(20px, 5vw, 64px);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: #06060a;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #23232b;
+  border-radius: 9px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+@keyframes lineUp {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

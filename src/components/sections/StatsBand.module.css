@@ -1,0 +1,42 @@
+.band {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(4px);
+}
+
+.grid {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: clamp(34px, 4vw, 52px) var(--gutter);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: clamp(24px, 3vw, 40px);
+}
+
+.value {
+  font-family: var(--font-cond);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+}
+
+.gold {
+  color: var(--gold);
+}
+
+.suffix {
+  color: var(--accent);
+}
+
+.label {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted-3);
+  text-transform: uppercase;
+}

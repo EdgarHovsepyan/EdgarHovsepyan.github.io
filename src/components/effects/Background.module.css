@@ -1,0 +1,18 @@
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.shader {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(130% 130% at 50% 28%, rgba(7, 7, 10, 0.42), rgba(7, 7, 10, 0.84) 74%);
+}

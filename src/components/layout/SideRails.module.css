@@ -1,0 +1,44 @@
+.rail {
+  position: fixed;
+  bottom: calc(28px + var(--sab));
+  z-index: 70;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.28em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  writing-mode: vertical-rl;
+}
+
+.left {
+  left: calc(20px + var(--sal));
+  transform: rotate(180deg);
+}
+
+.right {
+  right: calc(20px + var(--sar));
+}
+
+.tick {
+  display: inline-block;
+  width: 1px;
+  height: 60px;
+}
+
+.left .tick {
+  background: linear-gradient(var(--accent), transparent);
+  transform: rotate(180deg);
+}
+
+.right .tick {
+  background: linear-gradient(var(--accent-cyan), transparent);
+}
+
+@media (max-width: 980px) {
+  .rail {
+    display: none;
+  }
+}

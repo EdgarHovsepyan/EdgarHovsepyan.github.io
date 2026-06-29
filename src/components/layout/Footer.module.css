@@ -1,0 +1,83 @@
+.footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.watermark {
+  position: absolute;
+  right: var(--gutter);
+  top: calc(50% - 80px);
+  height: 160px;
+  opacity: 0.05;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 36px var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.monogram {
+  font-family: var(--font-arm);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  line-height: 1.6;
+}
+
+.role {
+  color: var(--text-faint);
+}
+
+.links {
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  flex-wrap: wrap;
+}
+
+.link {
+  text-decoration: none;
+  color: var(--text-soft);
+  transition: color 0.25s;
+}
+
+.link:hover {
+  color: var(--text);
+}
