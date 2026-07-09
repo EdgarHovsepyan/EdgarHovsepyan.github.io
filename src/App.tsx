@@ -4,6 +4,7 @@ import { CursorSpotlight } from './components/effects/CursorSpotlight.tsx';
 import { Grain } from './components/effects/Grain.tsx';
 import { ScrollProgress } from './components/effects/ScrollProgress.tsx';
 import { CustomCursor } from './components/effects/CustomCursor.tsx';
+import { SoundToggle } from './components/effects/SoundToggle.tsx';
 import { SideRails } from './components/layout/SideRails.tsx';
 import { Nav } from './components/layout/Nav.tsx';
 import { Footer } from './components/layout/Footer.tsx';
@@ -48,6 +49,7 @@ export function App() {
         <Contact />
       </main>
       <Footer />
+      <SoundToggle />
     </>
   );
 }
