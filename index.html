@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#07070A" />
 
+    <!-- Google Analytics 4. Create a property at https://analytics.google.com
+         (Admin → Data Streams → Web), then replace G-XXXXXXXXXX below with your
+         Measurement ID. It stays inert until you do, and never runs on localhost
+         so your own dev visits are not counted. -->
+    <script>
+      (function () {
+        var GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+        if (GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') return; // not configured yet
+        var host = location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host === '') return; // skip dev
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', GA_MEASUREMENT_ID);
+      })();
+    </script>
+
     <title>Edgar Hovsepyan — Senior HTML5 Game Developer</title>
     <meta
       name="description"
