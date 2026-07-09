@@ -1,0 +1,6 @@
+# https://edgarhovsepyan.github.io/robots.txt
+# Allow every search engine to crawl the whole site.
+User-agent: *
+Allow: /
+
+Sitemap: https://edgarhovsepyan.github.io/sitemap.xml
