@@ -25,6 +25,7 @@
   <img src="https://img.shields.io/badge/Yerevan%2C%20Armenia-Remote%20worldwide%20%C2%B7%20On--site-6E56CF?style=for-the-badge&logo=googlemaps&logoColor=white" alt="Location — Yerevan, Armenia · Remote worldwide / on-site" />
   <img src="https://img.shields.io/badge/7%2B%20years-50%2B%20HTML5%20casino%20titles-0EA5E9?style=for-the-badge" alt="7+ years · 50+ HTML5 casino titles shipped" />
   <img src="https://img.shields.io/badge/SBC%20Awards%20Americas%202025-Game%20of%20the%20Year%20SHORTLIST-F5B301?style=for-the-badge&labelColor=141414" alt="SBC Awards Americas 2025 — Game of the Year Shortlist" />
+  <img src="https://img.shields.io/badge/B.F.T.H.%20Arena%20Awards%202024-FINALIST-C9A227?style=for-the-badge&labelColor=141414" alt="B.F.T.H. Arena Awards 2024 — Finalist" />
 </p>
 
 <!-- ── contact / hire row (clickable) ── -->
@@ -61,8 +62,11 @@
 ### 🏆 &nbsp;Recognition
 
 <img src="https://img.shields.io/badge/SBC%20Awards%20Americas%202025-Game%20of%20the%20Year%20Shortlist-F5C518?style=for-the-badge&labelColor=141414" alt="SBC Awards Americas 2025 — Game of the Year Shortlist" />
+&nbsp;
+<img src="https://img.shields.io/badge/B.F.T.H.%20Arena%20Awards%202024-Finalist-C9A227?style=for-the-badge&labelColor=141414" alt="B.F.T.H. Arena Awards 2024 — Finalist" />
 
-<b>Non-Stop Roulette</b> · Pascal Gaming — shortlisted for <b>Game of the Year</b> at the SBC Awards Americas 2025.
+<b>Non-Stop Roulette</b> · Pascal Gaming — shortlisted for <b>Game of the Year</b> at the SBC Awards Americas 2025.<br />
+<b>B.F.T.H. Arena Awards 2024</b> — Finalist.
 
 </div>
 
@@ -114,7 +118,7 @@
 #### What I bring
 
 - 🎰 **50+ HTML5 casino titles** shipped end-to-end — blank canvas to regulator-ready.
-- 🏆 **SBC Awards Americas 2025 — Game of the Year shortlist** (Non-Stop Roulette, Pascal Gaming).
+- 🏆 **SBC Awards Americas 2025 — Game of the Year shortlist** (Non-Stop Roulette, Pascal Gaming) · **B.F.T.H. Arena Awards 2024 — Finalist**.
 - ⚡ **120 fps win-ceremonies on mobile** — hand-tuned render loops and VFX budgets.
 - 🤝 **Mentors mid & junior developers** and raises the bar for the whole team.
 - 🤖 **Builds the team's Claude Code + MCP AI build pipelines** — automation that compounds.

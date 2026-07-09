@@ -3,14 +3,14 @@ import { useScramble } from '../../hooks/useScramble.ts';
 import styles from './Awards.module.css';
 
 export function Awards() {
-  const kicker = useScramble<HTMLDivElement>('Recognition — 2025');
+  const kicker = useScramble<HTMLDivElement>('Recognition — 2024 · 2025');
 
   return (
     <section id="awards" className={styles.section}>
       <div className={styles.glow} aria-hidden="true" />
       <Reveal className={styles.content} from="scale">
         <div ref={kicker} className={styles.kicker}>
-          Recognition — 2025
+          Recognition — 2024 · 2025
         </div>
         <h2 className={styles.title}>Game of the Year</h2>
         <div className={styles.badge}>✦&nbsp;&nbsp;Shortlisted&nbsp;&nbsp;✦</div>
@@ -21,6 +21,16 @@ export function Awards() {
             SBC Awards Americas 2025 — Game of the Year shortlist · Certified across Latin America:
             Colombia · Peru · Brazil
           </span>
+        </div>
+
+        <div className={styles.divider} aria-hidden="true" />
+
+        <div className={styles.second}>
+          <div className={styles.secondBadge}>✦&nbsp;&nbsp;Finalist&nbsp;&nbsp;✦</div>
+          <div className={styles.secondTitle}>B.F.T.H. Arena Awards 2024</div>
+          <div className={styles.detail}>
+            <span className={styles.sub}>Industry recognition · iGaming</span>
+          </div>
         </div>
       </Reveal>
     </section>
