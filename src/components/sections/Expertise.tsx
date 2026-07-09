@@ -36,6 +36,7 @@ export function Expertise() {
             key={cell.label}
             className={cx(cell.wide && styles.wide)}
             delay={Math.min(index * 70, 240)}
+            from="scale"
           >
             <BentoCard cell={cell} />
           </Reveal>

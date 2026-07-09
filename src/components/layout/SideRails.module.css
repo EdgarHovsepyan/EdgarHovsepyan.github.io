@@ -25,7 +25,8 @@
 .tick {
   display: inline-block;
   width: 1px;
-  height: 60px;
+  /* Doubles as a page scroll-progress indicator: grows 18px → 96px (--scroll: 0→1). */
+  height: calc(18px + var(--scroll, 0) * 78px);
 }
 
 .left .tick {

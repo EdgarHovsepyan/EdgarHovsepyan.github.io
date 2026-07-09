@@ -8,7 +8,7 @@ export function Awards() {
   return (
     <section id="awards" className={styles.section}>
       <div className={styles.glow} aria-hidden="true" />
-      <Reveal className={styles.content}>
+      <Reveal className={styles.content} from="scale">
         <div ref={kicker} className={styles.kicker}>
           Recognition — 2025
         </div>

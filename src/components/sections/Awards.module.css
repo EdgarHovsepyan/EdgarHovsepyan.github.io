@@ -69,3 +69,16 @@
 .sub {
   color: var(--text-muted-3);
 }
+
+/* Local keyframes: CSS Modules scopes the `animation-name` reference in .glow,
+   so the matching @keyframes must live in this module (not global.css).
+   Centering is baked in so the animation doesn't clobber the -50%/-50% transform. */
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translate(-50%, calc(-50% + var(--py, 0px)));
+  }
+  50% {
+    transform: translate(-50%, calc(-50% - 16px + var(--py, 0px)));
+  }
+}

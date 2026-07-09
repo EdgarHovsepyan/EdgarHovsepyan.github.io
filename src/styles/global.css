@@ -92,23 +92,11 @@ a {
   background: var(--accent);
 }
 
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes ring {
-  0% {
-    transform: scale(1);
-    opacity: 0.55;
-  }
-  100% {
-    transform: scale(2.6);
-    opacity: 0;
-  }
-}
-
+/* Only globally-scoped (non-module) selectors may use keyframes defined here.
+   Any @keyframes used from a *.module.css file must be defined inside that
+   module — CSS Modules hashes the animation-name reference, so a global
+   @keyframes would never match. (marquee/ring/floaty/lineUp moved to their
+   modules for this reason.) */
 @keyframes blink {
   0%,
   100% {
@@ -116,25 +104,6 @@ a {
   }
   50% {
     opacity: 0.2;
-  }
-}
-
-@keyframes floaty {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-16px);
-  }
-}
-
-@keyframes lineUp {
-  from {
-    transform: translateY(110%);
-  }
-  to {
-    transform: translateY(0);
   }
 }
 

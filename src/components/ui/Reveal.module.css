@@ -1,21 +1,49 @@
 .reveal {
   opacity: 0;
-  transform: translateY(34px);
   transition:
     opacity 0.9s var(--ease),
-    transform 0.9s var(--ease);
+    transform 0.9s var(--ease),
+    filter 0.9s var(--ease);
   will-change: opacity, transform;
+}
+
+/* Entrance variants — the resting (out-of-view) transform per direction. */
+.up {
+  transform: translateY(34px);
+}
+
+.down {
+  transform: translateY(-34px);
+}
+
+.left {
+  transform: translateX(-48px);
+}
+
+.right {
+  transform: translateX(48px);
+}
+
+.scale {
+  transform: scale(0.94);
+}
+
+.blur {
+  transform: translateY(24px);
+  filter: blur(12px);
 }
 
 .visible {
   opacity: 1;
   transform: none;
+  filter: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
     transform: none;
+    filter: none;
     transition: none;
   }
 }

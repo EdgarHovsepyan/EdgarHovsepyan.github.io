@@ -16,7 +16,7 @@ export function Games() {
 
       <div className={styles.grid}>
         {games.map((game, index) => (
-          <Reveal key={game.name} delay={Math.min(index * 60, 280)}>
+          <Reveal key={game.name} delay={Math.min(index * 60, 280)} from="scale">
             <a
               href={game.url}
               target="_blank"

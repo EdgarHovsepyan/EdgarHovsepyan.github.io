@@ -6,6 +6,13 @@
   overflow: hidden;
 }
 
+/* Scroll-scrub wrapper: JS nudges this by scroll velocity while the inner
+   .track keeps its constant CSS drift, so the two transforms never conflict. */
+.scroller {
+  width: max-content;
+  will-change: transform;
+}
+
 .track {
   display: flex;
   width: max-content;
@@ -34,4 +41,13 @@
 .star {
   padding: 0 28px;
   color: #3a3a42;
+}
+
+/* Keyframes MUST live in this module. CSS Modules scopes the `animation-name`
+   reference above to a hashed name, so it only matches a @keyframes defined in
+   the same module. A global @keyframes would stay unscoped and never match. */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
 }

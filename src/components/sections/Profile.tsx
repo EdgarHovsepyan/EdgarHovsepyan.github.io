@@ -10,7 +10,7 @@ export function Profile() {
           <SectionHeader index="01" label="Profile" />
           <div className={styles.lead}>The mentor &amp; AI evangelist the team comes to.</div>
         </Reveal>
-        <Reveal className={styles.body}>
+        <Reveal className={styles.body} from="left">
           <p className={styles.para}>
             7+ years, <span className={styles.accent}>50+ HTML5 casino titles</span> shipped
             end-to-end — blank canvas to regulator-ready. I don’t job-hop; I join at zero and build

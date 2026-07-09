@@ -3,6 +3,7 @@ import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { profile } from '../../data/profile.ts';
 import { socials, contactDetails } from '../../data/contact.ts';
 import { useMagnetic } from '../../hooks/useMagnetic.ts';
+import { useParallaxVar } from '../../hooks/useParallaxVar.ts';
 import { cx } from '../../utils/cx.ts';
 import styles from './Contact.module.css';
 
@@ -29,11 +30,12 @@ function SocialButton({ label, href }: { label: string; href: string }) {
 
 export function Contact() {
   const cta = useMagnetic<HTMLAnchorElement>();
+  const glow = useParallaxVar<HTMLDivElement>(0.14);
   const mailto = `mailto:${profile.email}`;
 
   return (
     <section id="contact" className={styles.section}>
-      <div className={styles.glow} aria-hidden="true" />
+      <div ref={glow} className={styles.glow} aria-hidden="true" />
       <div className={styles.inner}>
         <Reveal>
           <SectionHeader index="07" label="Let’s build" />

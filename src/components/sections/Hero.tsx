@@ -1,14 +1,16 @@
 import { profile } from '../../data/profile.ts';
 import { useMagnetic } from '../../hooks/useMagnetic.ts';
 import { useScramble } from '../../hooks/useScramble.ts';
+import { useScrollProgress } from '../../hooks/useScrollProgress.ts';
 import styles from './Hero.module.css';
 
 export function Hero() {
   const primary = useMagnetic<HTMLAnchorElement>();
   const eyebrow = useScramble<HTMLDivElement>(profile.fullName);
+  const hero = useScrollProgress<HTMLElement>({ mode: 'exit' });
 
   return (
-    <header id="top" className={styles.hero}>
+    <header id="top" ref={hero} className={styles.hero}>
       <img className={styles.portrait} src={profile.portrait} alt={profile.fullName} />
       <div className={styles.portraitFade} aria-hidden="true" />
       <div className={styles.glow} aria-hidden="true" />
