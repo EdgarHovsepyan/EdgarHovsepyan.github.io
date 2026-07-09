@@ -11,7 +11,7 @@ Ordered top-to-bottom as it renders on the page. Source files noted per section.
 - **Last name:** Hovsepyan
 - **Wordmark (Armenian):** ԷԴԳԱՐ
 - **Full name:** Edgar Hovsepyan
-- **Initials / monogram:** Է·Հ
+- **Initials / monogram:** ԷՀ
 - **Title:** AI-Powered Creative Game Developer
 - **Badge:** ✦ SBC Awards Americas 2025 · GotY Shortlist
 - **Location:** Yerevan, Armenia · On-site ready
@@ -27,7 +27,7 @@ Ordered top-to-bottom as it renders on the page. Source files noted per section.
 
 ## Nav (`src/components/layout/Nav.tsx`)
 
-- Brand: Է·Հ · Edgar Hovsepyan
+- Brand: ԷՀ · Edgar Hovsepyan
 - Links: **Awards · Career · Work · Stack · Contact**
 - CTA: ● Available
 
@@ -42,7 +42,7 @@ Ordered top-to-bottom as it renders on the page. Source files noted per section.
 
 ## Preloader (`src/components/effects/Preloader.tsx`)
 
-- Mark: Է·Հ
+- Mark: ԷՀ
 - Caption: Loading portfolio
 
 ---
@@ -174,7 +174,7 @@ EV-charging platform (NestJS/OCPP), a WhatsApp AI sales agent (RAG), and an indi
 
 ## Shader Band (`src/components/sections/ShaderBand.tsx`)
 
-- Mark: Է·Հ
+- Mark: ԷՀ
 - Caption: AI-Powered Creative Game Developer
 
 ---
@@ -236,7 +236,7 @@ Armenian — Native · Russian — C1 · English — B2
 
 ## Footer (`src/components/layout/Footer.tsx`)
 
-- Brand: Է·Հ · Edgar Hovsepyan
+- Brand: ԷՀ · Edgar Hovsepyan
 - Role: AI-Powered Creative Game Developer
 - Links: GitHub · LinkedIn
 - © 2026 · Yerevan, Armenia
