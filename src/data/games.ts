@@ -5,17 +5,22 @@ export interface Game {
   featured?: boolean;
 }
 
-const base = (slug: string, gameId: number, gameTypeId: number) =>
-  `https://pg.vbet.am/${slug}/?partnerId=1&currency=FUN&currencySymbol=FUN&culture=en&gameId=${gameId}&gameTypeId=${gameTypeId}&mode=fun&theme=Standart`;
+// Official Pascal Gaming fun-mode (demo) launcher. Hitting this endpoint
+// self-generates a fresh launchToken and opens the game — so the link stays
+// valid (no token to expire). token_155 + this partnerKey are Pascal's public
+// demo credentials (the same ones exposed on pascalgaming.com/game-portfolio).
+// Every gameId below was verified live in demo mode on 2026-07-09.
+const demo = (gameId: number) =>
+  `https://pg.pascalgaming.com/launch?gameId=${gameId}&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207`;
 
 export const games: Game[] = [
-  { name: 'Multiplier Blackjack', type: 'Blackjack', url: base('multiplierblackjack', 186, 289), featured: true },
-  { name: 'Super Blaize', type: 'Slot', url: base('superblaize', 282, 409), featured: true },
-  { name: 'Bet on Poker', type: 'Poker', url: base('betonpoker', 999, 184), featured: true },
-  { name: 'Mega Plinko', type: 'Plinko', url: base('megaplinko', 190, 347), featured: true },
-  { name: 'Flaming Heart', type: 'Slot', url: base('flaming-heart', 232, 351) },
-  { name: 'Golden Tree', type: 'Slot', url: base('goldentree', 124, 181) },
-  { name: 'Sugar Balloon', type: 'Crash', url: base('sugarballoon', 314, 434) },
-  { name: 'Franken Alive', type: 'Slot', url: base('frankenalive', 268, 378) },
-  { name: 'Juicy Storm', type: 'Slot', url: base('juicystorm', 273, 383) },
+  { name: 'Multiplier Blackjack', type: 'Blackjack', url: demo(186), featured: true },
+  { name: 'Super Blaize', type: 'Slot', url: demo(282), featured: true },
+  { name: 'Bet on Poker', type: 'Poker', url: demo(999), featured: true },
+  { name: 'Mega Plinko', type: 'Plinko', url: demo(190), featured: true },
+  { name: 'Flaming Heart', type: 'Slot', url: demo(232) },
+  { name: 'Golden Tree', type: 'Slot', url: demo(124) },
+  { name: 'Sugar Balloon', type: 'Crash', url: demo(314) },
+  { name: 'Franken Alive', type: 'Slot', url: demo(268) },
+  { name: 'Juicy Storm', type: 'Slot', url: demo(273) },
 ];
