@@ -29,3 +29,11 @@
   transition: opacity 0.3s;
   mix-blend-mode: difference;
 }
+
+/* Custom cursor is meaningless on touch devices — hide it there. */
+@media (hover: none), (pointer: coarse) {
+  .ring,
+  .dot {
+    display: none;
+  }
+}

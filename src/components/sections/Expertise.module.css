@@ -81,3 +81,15 @@
 .chipsBig {
   margin-top: 22px;
 }
+
+/* On narrow screens use a single column: the `span 2` wide cells would otherwise
+   force a 2-column grid wider than the viewport (horizontal-overflow bug). */
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+}

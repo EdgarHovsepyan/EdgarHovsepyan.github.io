@@ -13,3 +13,11 @@
   transition: opacity 0.6s ease;
   mix-blend-mode: screen;
 }
+
+/* Mouse-only effect — remove on touch devices (no cursor, and the off-screen
+   fixed box can nudge horizontal overflow). */
+@media (hover: none), (pointer: coarse) {
+  .spot {
+    display: none;
+  }
+}
