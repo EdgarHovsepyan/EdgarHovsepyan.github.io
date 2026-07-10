@@ -1,25 +1,18 @@
-/* Tall section gives the sticky stage room to hold while the scroll effect
-   plays through (the "held frame" cinema moment). No overflow here — clipping
-   lives on .stage so it doesn't turn the section into a scroll container and
-   break position: sticky. */
+/* A normal full-height section (no sticky pin) — it scrolls through the viewport
+   like everything else, and the scroll effects (blur focus + parallax) are driven
+   by a scrubbed timeline, not a pin, so the page never feels stuck. */
 .section {
   position: relative;
   z-index: 2;
-  min-height: 210vh;
-}
-
-.stage {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
   background: radial-gradient(circle at 50% 38%, #181031, #07070a 72%);
 }
 
-/* Slightly larger than the stage so the parallax drift never reveals the edges. */
+/* Slightly larger than the section so the parallax drift never reveals the edges. */
 .grid {
   position: absolute;
   inset: -6%;
@@ -180,10 +173,6 @@
 /* Phones: a lighter 2-reel stack (the IntersectionObserver skips the hidden
    cells, so only two videos ever decode). */
 @media (max-width: 700px) {
-  .section {
-    min-height: 182vh;
-  }
-
   .grid {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr 1fr;

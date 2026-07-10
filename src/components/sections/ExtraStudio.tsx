@@ -101,39 +101,38 @@ export function ExtraStudio() {
 
   return (
     <section id="extra-studio" ref={root} className={styles.section}>
-      <div className={styles.stage}>
-        <div ref={grid} className={styles.grid} aria-hidden="true">
-          {REELS.map((src) => (
-            <div key={src} className={styles.cell}>
-              <video className={styles.video} src={src} muted loop playsInline preload="metadata" />
-            </div>
-          ))}
+      <div ref={grid} className={styles.grid} aria-hidden="true">
+        {REELS.map((src) => (
+          <div key={src} className={styles.cell}>
+            <video className={styles.video} src={src} muted loop playsInline preload="metadata" />
+          </div>
+        ))}
+      </div>
+
+      <div className={styles.shine} aria-hidden="true" />
+      <div className={styles.scrim} aria-hidden="true" />
+
+      <div ref={content} className={styles.content}>
+        <div className={styles.kicker} data-parallax="0.3">
+          What I do · Where I&rsquo;m going
         </div>
-
-        <div className={styles.shine} aria-hidden="true" />
-        <div className={styles.scrim} aria-hidden="true" />
-
-        <div ref={content} className={styles.content}>
-          <div className={styles.kicker} data-parallax="0.3">
-            Extra Studio · 2019 — 2023
-          </div>
-          <h2 className={styles.title} data-parallax="0.15">
-            The Extra Studio floor
-          </h2>
-          <p className={styles.caption} data-parallax="0.55">
-            <strong>40+ titles shipped</strong>, the studio&rsquo;s highest-volume line.
-          </p>
-          <p className={styles.body} data-parallax="0.8">
-            Slots, mini table games, roulette, baccarat, poker, blackjack and playable ads, across
-            desktop and mobile. I owned each one from blank concept to final art integration, tuning
-            the weight and the win moment until it read as premium at a glance.
-          </p>
-          <div className={styles.tags} data-parallax="1.05">
-            <span>Slots</span>
-            <span>Table games</span>
-            <span>Playable ads</span>
-            <span>Concept &rarr; art</span>
-          </div>
+        <h2 className={styles.title} data-parallax="0.15">
+          I build the rush
+        </h2>
+        <p className={styles.caption} data-parallax="0.55">
+          I engineer how casino games <strong>feel</strong>.
+        </p>
+        <p className={styles.body} data-parallax="0.8">
+          The weight of a spin, the snap of a reel stop, the near-miss that pulls a thumb back for
+          one more. Fifty-plus titles in seven years, every win ceremony landed at 120&nbsp;fps.
+          Next: bigger titles, the SBC shortlist turned into a trophy, and my own studio running
+          Claude Code and MCP pipelines start to finish.
+        </p>
+        <div className={styles.tags} data-parallax="1.05">
+          <span>Game feel</span>
+          <span>120fps ceremonies</span>
+          <span>SBC GotY shortlist</span>
+          <span>Claude Code + MCP</span>
         </div>
       </div>
     </section>
