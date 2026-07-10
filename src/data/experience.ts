@@ -3,7 +3,7 @@ import type { ExperienceEntry } from './types.ts';
 export const experience: ExperienceEntry[] = [
   {
     period: '2024 — Now',
-    role: 'Senior HTML5 Game Developer',
+    role: 'Senior Game Developer',
     org: 'Pascal Gaming · BetConstruct',
     description:
       'Full-cycle PixiJS v8 / TypeScript across the whole floor — slots, poker & Hold’em, blackjack, roulette & 3D roulette, baccarat, Hi-Lo, crash, Plinko, Mines, Penalty, Deal-or-No-Deal, arcade & branded.',
@@ -31,8 +31,8 @@ export const experience: ExperienceEntry[] = [
   },
   {
     period: '2019 — 2023',
-    role: 'HTML5 Game Developer · iGaming',
-    org: 'Extra Studio LLC',
+    role: 'Game Developer · Freelance',
+    org: 'Extra Studio LLC · alongside the Fastexverse role',
     description:
       'Owned mini games, mini table games and playable ads — the studio’s biggest output — concept to art integration.',
     tags: ['Three.js', 'PlayCanvas', 'Playable Ads'],

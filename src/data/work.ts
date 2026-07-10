@@ -10,10 +10,10 @@ export const work: WorkProject[] = [
   },
   {
     id: 'A2',
-    title: '678 Claude Code Skills',
+    title: 'AI Build Pipelines',
     description:
-      'A reusable agent library + MCP servers for asset generation, atlas packing and prototyping.',
-    tags: ['MCP', 'Agents', 'Pipelines'],
+      'Claude Code + MCP tooling the team uses daily: asset generation, atlas packing, game scaffolding and prototyping.',
+    tags: ['Claude Code', 'MCP', 'Pipelines'],
   },
   {
     id: 'A3',

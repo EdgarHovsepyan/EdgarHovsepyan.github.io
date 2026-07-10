@@ -48,8 +48,9 @@ export function Hero() {
         <div className={styles.line}>
           <div className={styles.lineIn}>
             <p className={styles.role}>
-              Senior <span className={styles.strong}>HTML5 Game Developer</span> — iGaming · PixiJS ·
-              WebGL/WebGPU · <span className={styles.ai}>AI Engineering</span>
+              Senior <span className={styles.strong}>Game Developer</span> · 2D/3D for the Web —
+              TypeScript · PixiJS · Three.js · WebGL/WebGPU ·{' '}
+              <span className={styles.ai}>AI-assisted pipelines</span>
             </p>
           </div>
         </div>

@@ -5,14 +5,14 @@
 <div align="center">
 
 <a href="https://edgarhovsepyan.github.io/">
-  <img src=".github/media/banner.png" width="100%" alt="Edgar Hovsepyan — Senior HTML5 Game Developer · iGaming" />
+  <img src=".github/media/banner.png" width="100%" alt="Edgar Hovsepyan — Senior Game Developer · iGaming" />
 </a>
 
 <br /><br />
 
 <h1>Edgar&nbsp;Hovsepyan</h1>
 
-<h3>Senior HTML5 Game Developer&nbsp;·&nbsp;iGaming&nbsp;&nbsp;|&nbsp;&nbsp;AI-Powered Creative Game Developer</h3>
+<h3>Senior Game Developer&nbsp;·&nbsp;2D/3D for the Web&nbsp;&nbsp;|&nbsp;&nbsp;TypeScript · PixiJS · Three.js · WebGL/WebGPU</h3>
 
 <p>
   <b>Blank canvas → regulator-ready.</b> 7+ years shipping premium casino titles that hit
@@ -455,7 +455,7 @@ environment on first run. Vercel's git integration mirrors the same commits — 
 
 <div align="center">
 
-<img src="public/assets/og-image.png" width="70%" alt="Edgar Hovsepyan — Senior HTML5 Game Developer" />
+<img src="public/assets/og-image.png" width="70%" alt="Edgar Hovsepyan — Senior Game Developer" />
 
 <br /><br />
 

@@ -8,17 +8,21 @@ export function Profile() {
       <div className={styles.grid}>
         <Reveal>
           <SectionHeader index="01" label="Profile" />
-          <div className={styles.lead}>The mentor &amp; AI evangelist the team comes to.</div>
+          <div className={styles.lead}>
+            50+ games shipped, every one profiled on a mid-tier Android before it went live.
+          </div>
         </Reveal>
         <Reveal className={styles.body} from="left">
           <p className={styles.para}>
-            7+ years, <span className={styles.accent}>50+ HTML5 casino titles</span> shipped
-            end-to-end — blank canvas to regulator-ready. I don’t job-hop; I join at zero and build
-            to ten, then build the AI pipelines the team runs on.
+            In seven years I have shipped <span className={styles.accent}>50+ games end to end</span>,
+            slots to crash to live 3D roulette, and spent four of those years leading a Unity,
+            Unreal, front-end, back-end and QA team building VR and WebXR worlds.
           </p>
           <p className={styles.paraMuted}>
-            Clean TypeScript on one side; Spine, GLSL/WGSL shaders, 2D/3D physics and 120&nbsp;fps
-            win-ceremonies on the other.
+            My favorite problems sit where physics meets server truth: a Plinko ball that must land
+            exactly where the backend already decided, a win ceremony that holds 120&nbsp;fps in a
+            browser tab. Our team&rsquo;s Non-Stop Roulette made the SBC Awards 2025 Game of the
+            Year shortlist. I want the next one to win.
           </p>
         </Reveal>
       </div>
