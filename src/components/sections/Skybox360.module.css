@@ -1,0 +1,92 @@
+/* Tall section gives the sticky stage its scroll travel; clipping lives on the
+   stage (not the section) so position: sticky keeps working. */
+.section {
+  position: relative;
+  z-index: 2;
+  min-height: 280vh;
+  background: #040406;
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.canvasHost {
+  position: absolute;
+  inset: 0;
+}
+
+.canvasHost canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* DOM fallback title — the content is never gated on WebGL. Hidden only once
+   the renderer reports in via data-webgl on the section. */
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 0.6s var(--ease);
+}
+
+.section[data-webgl='on'] .fallback {
+  opacity: 0;
+}
+
+.fallbackName {
+  font-family: var(--font-cond);
+  font-size: clamp(44px, 9vw, 128px);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.9;
+  color: var(--text);
+}
+
+.fallbackRole {
+  font-family: var(--font-mono);
+  font-size: clamp(12px, 1.6vw, 16px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(26px + var(--sab));
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 245, 0.5);
+  padding: 9px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 100px;
+  background: rgba(7, 7, 10, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    min-height: 100vh;
+  }
+
+  .hint {
+    display: none;
+  }
+}

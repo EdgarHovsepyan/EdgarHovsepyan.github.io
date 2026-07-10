@@ -25,7 +25,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: clamp(14px, 1.6vw, 20px);
 }
 
@@ -33,18 +33,16 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 168px;
-  padding: clamp(20px, 2vw, 28px);
+  min-height: 240px;
   border-radius: 18px;
   border: 1px solid var(--line-strong);
-  background: linear-gradient(160deg, rgba(18, 18, 24, 0.85), rgba(11, 11, 15, 0.6));
+  background: #0b0b10;
   text-decoration: none;
   color: var(--text);
   overflow: hidden;
   transition:
     transform 0.45s var(--ease),
-    border-color 0.4s,
-    background 0.4s;
+    border-color 0.4s;
 }
 
 .card:hover {
@@ -52,9 +50,55 @@
   border-color: rgba(77, 124, 255, 0.4);
 }
 
+.card.static:hover {
+  transform: none;
+  border-color: rgba(229, 192, 123, 0.35);
+}
+
 .featured {
   border-color: rgba(77, 124, 255, 0.28);
-  background: linear-gradient(155deg, rgba(30, 42, 82, 0.5), rgba(12, 14, 24, 0.7));
+}
+
+/* Real gameplay capture as the card's backdrop. */
+.thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+
+.card:hover .thumb {
+  transform: scale(1.06);
+}
+
+/* Case-study cards (no public demo) get a procedural table-felt wash. */
+.artFallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(90% 70% at 80% 10%, rgba(229, 192, 123, 0.2), transparent 60%),
+    radial-gradient(80% 80% at 15% 90%, rgba(77, 124, 255, 0.16), transparent 62%),
+    linear-gradient(160deg, #11131c, #0a0a10);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 7, 10, 0.28) 0%, transparent 32%, rgba(7, 7, 10, 0.9) 78%),
+    linear-gradient(0deg, rgba(7, 7, 10, 0.55) 0%, transparent 42%);
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: clamp(18px, 2vw, 24px);
 }
 
 .top {
@@ -68,30 +112,59 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.featured .type {
-  color: var(--accent-blue-soft);
+  color: var(--accent-blue-chip);
+  padding: 5px 11px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(7, 7, 10, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .star {
   color: var(--gold);
-  font-size: 13px;
+  font-size: 14px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.award {
+  margin-top: 12px;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 6px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(229, 192, 123, 0.45);
+  background: rgba(20, 16, 6, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .name {
   margin: auto 0 0;
   font-family: var(--font-cond);
-  font-size: clamp(24px, 2.4vw, 34px);
+  font-size: clamp(24px, 2.3vw, 32px);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.01em;
   line-height: 1;
+  text-shadow: 0 3px 16px rgba(0, 0, 0, 0.7);
+}
+
+.craft {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  max-width: 420px;
+  text-wrap: pretty;
 }
 
 .play {
-  margin-top: 16px;
+  margin-top: 14px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -109,25 +182,21 @@
   transform: translateX(5px);
 }
 
-.glow {
-  position: absolute;
-  right: -50px;
-  top: -50px;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(77, 124, 255, 0.14), transparent 65%);
-  opacity: 0;
-  transition: opacity 0.45s;
-  pointer-events: none;
-}
-
-.card:hover .glow {
-  opacity: 1;
+.caseStudy {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 @media (max-width: 600px) {
   .grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    min-height: 210px;
   }
 }
