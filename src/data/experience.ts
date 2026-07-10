@@ -10,9 +10,9 @@ export const experience: ExperienceEntry[] = [
     tags: ['PixiJS v8', 'TypeScript', 'Spine VFX', 'Claude Code · MCP'],
     highlights: [
       'Part of the team behind Non-Stop Roulette — SBC Awards Americas 2025 Game of the Year shortlist (certified across Colombia, Peru & Brazil)',
-      'Built the studio’s Spine + particle VFX web editor',
+      'Built the studio’s Spine + particle VFX web editor, used daily by 15 people across the 21-animator art team',
       'Shipped an AI animation-benchmark / QA tool for the artists',
-      'Owns the Claude Code + MCP build pipeline; mentors mid & junior devs',
+      'Own the Claude Code + MCP build pipeline; mentor mid & junior devs',
     ],
   },
   {
@@ -20,12 +20,12 @@ export const experience: ExperienceEntry[] = [
     role: 'Team Lead · Metaverse Platform Engineer',
     org: 'Fastexverse · PandaMR',
     description:
-      'Joined at zero, built the metaverse platform to ten. Led a cross-functional team (Unity, Unreal, front, back, QA) on a metaverse aggregator.',
-    tags: ['Unity', 'Unreal', 'WebXR', 'Web3 / NFT'],
+      'Joined at zero and built the platform to production. Led 10 Unity developers plus front-end, back-end and QA on a metaverse aggregator.',
+    tags: ['Unity', 'WebXR', 'Web3 / NFT'],
     highlights: [
       'Shipped live events & ticketing, performance venues, in-world casino & iGaming integrations',
       'Immersive 3D worlds with VR/AR/WebXR',
-      'Wallet integrations and on-chain transitions',
+      'Wallet integrations and on-chain transactions',
       'Brought in the team’s first AI tooling',
     ],
   },
@@ -34,12 +34,11 @@ export const experience: ExperienceEntry[] = [
     role: 'Game Developer · Freelance',
     org: 'Extra Studio LLC · alongside the Fastexverse role',
     description:
-      'Owned mini games, mini table games and playable ads — the studio’s biggest output — concept to art integration.',
+      'Owned mini games, mini table games and playable ads — the studio’s biggest output — from concept to art integration.',
     tags: ['Three.js', 'PlayCanvas', 'Playable Ads'],
     highlights: [
-      'Built & optimised gameplay for desktop and mobile',
+      'Built & optimized gameplay for desktop and mobile',
       'Helped juniors level up',
-      'Concept-to-art-integration ownership',
     ],
   },
   {
@@ -47,7 +46,7 @@ export const experience: ExperienceEntry[] = [
     role: 'Three.js Developer',
     org: 'Arakssys',
     description:
-      'Built virtual rooms and computer-vision calcs for apartment renovation & visualisation.',
+      'Built virtual rooms and computer-vision calcs for apartment renovation & visualization.',
     tags: ['Three.js', 'React', 'Computer Vision'],
     highlights: ['Focused on rendering accuracy', 'Cross-browser performance'],
   },

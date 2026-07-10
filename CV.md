@@ -1,3 +1,8 @@
+> ⛔ SUPERSEDED (2026-07-10) — historical transcription of a retired PDF, kept for reference only.
+> Do NOT paste this anywhere: it contains outdated claims ("HTML5 Game Developer" title,
+> "2026 SBC finalist", "678 skills", Unreal, "English — B2"). The current fact source is
+> CV-2026.md, and the live PDF is public/Edgar_Hovsepyan_CV.pdf.
+
 # Edgar Hovsepyan — CV (source markdown)
 
 > Faithful markdown of `public/Edgar_Hovsepyan_CV.pdf` (2 pages). Use this as the

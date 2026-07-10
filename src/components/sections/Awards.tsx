@@ -18,7 +18,7 @@ export function Awards() {
           Non-Stop Roulette · Pascal Gaming
           <br />
           <span className={styles.sub}>
-            SBC Awards Americas 2025 — Game of the Year shortlist · Certified across Latin America:
+            SBC Awards Americas 2025 — Game of the Year shortlist (team credit) · Certified across Latin America:
             Colombia · Peru · Brazil
           </span>
         </div>

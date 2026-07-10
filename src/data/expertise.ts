@@ -19,7 +19,7 @@ export const bento: BentoCell[] = [
   },
   {
     label: 'Engines & 3D',
-    chips: ['Three.js / WebGL', 'Babylon.js', 'PlayCanvas', 'Cocos Creator', 'Unity', 'Unreal'],
+    chips: ['Three.js / WebGL', 'Babylon.js', 'PlayCanvas', 'Cocos Creator', 'Unity'],
   },
   {
     label: 'Game Systems',
@@ -50,6 +50,6 @@ export const bento: BentoCell[] = [
   },
   {
     label: 'Languages',
-    chips: ['Armenian — Native', 'Russian — C1', 'English — B2'],
+    chips: ['Armenian — Native', 'Russian — Full professional', 'English — Professional working'],
   },
 ];

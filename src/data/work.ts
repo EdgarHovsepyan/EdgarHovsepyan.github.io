@@ -5,7 +5,7 @@ export const work: WorkProject[] = [
     id: 'A1',
     title: 'VFX Tooling',
     description:
-      'A Spine + particle web editor/viewer and an AI animation-benchmark / QA tool built for the art team.',
+      'A Spine + particle web editor and an AI animation-benchmark / QA tool, used daily by 15 people across a 21-animator art team.',
     tags: ['Spine', 'Particles', 'AI QA'],
   },
   {
