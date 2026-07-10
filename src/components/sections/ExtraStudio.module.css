@@ -1,25 +1,48 @@
+/* Tall section gives the sticky stage room to hold while the scroll effect
+   plays through (the "held frame" cinema moment). No overflow here — clipping
+   lives on .stage so it doesn't turn the section into a scroll container and
+   break position: sticky. */
 .section {
   position: relative;
   z-index: 2;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 190vh;
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
   background: radial-gradient(circle at 50% 38%, #181031, #07070a 72%);
 }
 
-.media {
+.grid {
   position: absolute;
   inset: 0;
   z-index: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  will-change: transform, filter;
+  transform: translateZ(0);
 }
 
-.board {
+.cell {
+  position: relative;
+  overflow: hidden;
+  background: #0a0a12;
+}
+
+.video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
+  display: block;
 }
 
 .shine {
@@ -36,11 +59,11 @@
     105deg,
     transparent 0%,
     rgba(255, 255, 255, 0.05) 38%,
-    rgba(255, 238, 184, 0.28) 50%,
+    rgba(255, 238, 184, 0.22) 50%,
     rgba(255, 255, 255, 0.05) 62%,
     transparent 100%
   );
-  animation: shineSweep 6.5s ease-in-out infinite;
+  animation: shineSweep 7s ease-in-out infinite;
 }
 
 @keyframes shineSweep {
@@ -60,13 +83,15 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(7, 7, 10, 0.5) 0%,
-    transparent 18%,
-    transparent 56%,
-    rgba(7, 7, 10, 0.92) 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 7, 10, 0.62) 0%,
+      transparent 20%,
+      transparent 46%,
+      rgba(7, 7, 10, 0.94) 100%
+    ),
+    radial-gradient(120% 90% at 50% 42%, transparent 40%, rgba(7, 7, 10, 0.55) 100%);
 }
 
 .content {
@@ -76,6 +101,7 @@
   margin: 0 auto;
   width: 100%;
   padding: 0 var(--gutter) clamp(48px, 8vw, 96px);
+  will-change: transform;
 }
 
 .kicker {
@@ -89,20 +115,21 @@
 .title {
   margin-top: 12px;
   font-family: var(--font-cond);
-  font-size: clamp(40px, 7vw, 96px);
+  font-size: clamp(40px, 7vw, 92px);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.01em;
   line-height: 0.92;
   color: var(--text);
-  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
+  text-wrap: balance;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
 }
 
 .caption {
   margin-top: 16px;
   max-width: 660px;
   font-family: var(--font-cond);
-  font-size: clamp(20px, 2.6vw, 34px);
+  font-size: clamp(20px, 2.6vw, 32px);
   font-weight: 600;
   line-height: 1.2;
   color: var(--text);
@@ -112,4 +139,58 @@
 .caption strong {
   color: var(--gold);
   font-weight: 700;
+}
+
+.body {
+  margin-top: 14px;
+  max-width: 60ch;
+  font-family: var(--font-sans);
+  font-size: clamp(14px, 1.7vw, 17px);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+.tags {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.tags span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding: 7px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(2px);
+}
+
+/* Phones: a lighter 2-reel stack (the IntersectionObserver skips the hidden
+   cells, so only two videos ever decode). */
+@media (max-width: 700px) {
+  .section {
+    min-height: 168vh;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .cell:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shine {
+    animation: none;
+    opacity: 0.25;
+  }
 }
