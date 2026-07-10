@@ -5,7 +5,7 @@
 .section {
   position: relative;
   z-index: 2;
-  min-height: 190vh;
+  min-height: 210vh;
 }
 
 .stage {
@@ -19,9 +19,10 @@
   background: radial-gradient(circle at 50% 38%, #181031, #07070a 72%);
 }
 
+/* Slightly larger than the stage so the parallax drift never reveals the edges. */
 .grid {
   position: absolute;
-  inset: 0;
+  inset: -6%;
   z-index: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -37,11 +38,16 @@
   background: #0a0a12;
 }
 
+/* Blown up ~16% and anchored top-left so the generator's ✦ watermark in each
+   clip's bottom-right corner is cropped clean away (overflow: hidden on .cell). */
 .video {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 116%;
+  height: 116%;
   object-fit: cover;
-  object-position: center;
+  object-position: left top;
   display: block;
 }
 
@@ -126,7 +132,7 @@
 }
 
 .caption {
-  margin-top: 16px;
+  margin-top: 20px;
   max-width: 660px;
   font-family: var(--font-cond);
   font-size: clamp(20px, 2.6vw, 32px);
@@ -175,7 +181,7 @@
    cells, so only two videos ever decode). */
 @media (max-width: 700px) {
   .section {
-    min-height: 168vh;
+    min-height: 182vh;
   }
 
   .grid {
