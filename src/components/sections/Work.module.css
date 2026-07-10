@@ -33,13 +33,151 @@
   flex: 0 0 auto;
   width: clamp(320px, 60vw, 600px);
   height: clamp(380px, 58vh, 560px);
-  display: flex;
-  flex-direction: column;
   padding: clamp(28px, 3vw, 44px);
   border-radius: 22px;
   border: 1px solid var(--line-strong);
   background: linear-gradient(160deg, rgba(20, 20, 26, 0.92), rgba(12, 12, 16, 0.72));
   overflow: hidden;
+  /* pointer parallax + per-card palette (overridden per nth-child) */
+  --px: 0;
+  --py: 0;
+  --card-accent: #4d7cff;
+  --card-accent-2: #22d3ee;
+  transform: perspective(1400px) rotateY(calc(var(--px) * 3.2deg)) rotateX(calc(var(--py) * -3.2deg));
+  transition:
+    transform 0.5s var(--ease),
+    border-color 0.4s;
+}
+
+.panel:hover {
+  border-color: color-mix(in srgb, var(--card-accent) 45%, var(--line-strong));
+}
+
+.panel:nth-child(1) {
+  --card-accent: #4d7cff;
+  --card-accent-2: #22d3ee;
+}
+.panel:nth-child(2) {
+  --card-accent: #22d3ee;
+  --card-accent-2: #4d7cff;
+}
+.panel:nth-child(3) {
+  --card-accent: #e5c07b;
+  --card-accent-2: #ff9d5a;
+}
+.panel:nth-child(4) {
+  --card-accent: #5be49b;
+  --card-accent-2: #22d3ee;
+}
+
+/* Generative art wash — a per-card mesh in its own accent, drifts opposite the
+   cursor (deepest layer). */
+.artBg {
+  position: absolute;
+  inset: -14%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      55% 45% at 78% 12%,
+      color-mix(in srgb, var(--card-accent) 26%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      52% 55% at 12% 90%,
+      color-mix(in srgb, var(--card-accent-2) 20%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(80% 80% at 50% 50%, transparent 45%, rgba(7, 7, 10, 0.5) 100%);
+  transform: translate(calc(var(--px) * -12px), calc(var(--py) * -12px));
+  transition: transform 0.5s var(--ease);
+}
+
+/* Portal — a soft glowing core with a spinning gradient ring, drifts most with
+   the cursor (the closest layer), and opens up on hover. */
+.portalWrap {
+  position: absolute;
+  z-index: 0;
+  right: -70px;
+  top: -80px;
+  width: 360px;
+  height: 360px;
+  pointer-events: none;
+  opacity: 0.5;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--card-accent) 34%, transparent),
+    transparent 58%
+  );
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  transform: translate(calc(var(--px) * 30px), calc(var(--py) * 30px));
+  transition:
+    transform 0.5s var(--ease),
+    opacity 0.45s var(--ease);
+}
+
+.panel:hover .portalWrap {
+  opacity: 0.95;
+}
+
+.portal {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--card-accent) 55deg,
+    transparent 120deg,
+    var(--card-accent-2) 235deg,
+    transparent 320deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 40%, #000 49%, #000 66%, transparent 74%);
+  mask: radial-gradient(circle, transparent 40%, #000 49%, #000 66%, transparent 74%);
+  filter: blur(2px);
+  animation: portalSpin 18s linear infinite;
+}
+
+@keyframes portalSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Diagonal light sheen that follows the cursor across the card. */
+.sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in srgb, var(--card-accent) 14%, transparent) 48%,
+    transparent 66%
+  );
+  transform: translateX(calc(var(--px) * 40px));
+  transition:
+    opacity 0.4s var(--ease),
+    transform 0.5s var(--ease);
+  mix-blend-mode: screen;
+}
+
+.panel:hover .sheen {
+  opacity: 1;
+}
+
+/* Content sits above the art and drifts slightly toward the cursor for depth. */
+.panelInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transform: translate(calc(var(--px) * 6px), calc(var(--py) * 6px));
+  transition: transform 0.5s var(--ease);
 }
 
 .panelTop {
@@ -52,7 +190,7 @@
 .panelNo {
   font-size: 13px;
   letter-spacing: 0.1em;
-  color: var(--accent);
+  color: var(--card-accent);
 }
 
 .panelCount {
@@ -70,6 +208,7 @@
   text-transform: uppercase;
   letter-spacing: 0.01em;
   line-height: 0.95;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 }
 
 .panelDesc {
@@ -88,17 +227,6 @@
   gap: 10px;
 }
 
-.panelGlow {
-  position: absolute;
-  right: -60px;
-  top: -60px;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(77, 124, 255, 0.16), transparent 65%);
-  pointer-events: none;
-}
-
 @media (max-width: 879px) {
   .viewport {
     min-height: 0;
@@ -115,7 +243,14 @@
   .panel {
     width: auto;
     height: auto;
-    min-height: 300px;
+    min-height: 320px;
+    /* no cursor on touch — keep the card flat, art + portal still animate */
+    transform: none;
+  }
+
+  .portalWrap {
+    filter: blur(4px);
+    opacity: 0.6;
   }
 }
 
@@ -136,6 +271,20 @@
   .panel {
     width: auto;
     height: auto;
-    min-height: 300px;
+    min-height: 320px;
+    transform: none;
+    transition: border-color 0.4s;
+  }
+
+  .portal {
+    animation: none;
+  }
+
+  .artBg,
+  .portalWrap,
+  .sheen,
+  .panelInner {
+    transform: none;
+    transition: none;
   }
 }
