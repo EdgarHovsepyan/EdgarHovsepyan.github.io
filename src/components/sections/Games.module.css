@@ -33,6 +33,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  /* Fill the grid row: each card is wrapped in a Reveal grid-item that stretches
+     to the tallest card in its row, so the card must take 100% height or its
+     object-fit:cover thumbnail leaves the bottom of the cell exposed. */
+  height: 100%;
   min-height: 240px;
   border-radius: 18px;
   border: 1px solid var(--line-strong);
