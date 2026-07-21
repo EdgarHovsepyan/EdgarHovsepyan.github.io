@@ -124,8 +124,15 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     const mobile = coarse || window.innerWidth < 820;
     const cores = navigator.hardwareConcurrency || 8;
-    const steps = mobile ? 14 : cores <= 4 ? 26 : 40;
-    const renderScale = mobile ? 0.5 : 0.66;
+
+    // Mobile / touch devices skip the WebGL raymarch entirely — a full-screen
+    // volumetric fragment shader saturates the main thread and GPU on weak
+    // phones (it was the dominant cost in the mobile Lighthouse profile). The
+    // static CSS gradient in Background.module.css is the backdrop there.
+    if (mobile) return;
+
+    const steps = cores <= 4 ? 24 : 34;
+    const renderScale = 0.62;
     const fragmentShader = `#define STEPS ${steps}\n${fragmentBody}`;
 
     let renderer: THREE.WebGLRenderer;

@@ -159,6 +159,10 @@ export function Skybox360() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.matchMedia('(max-width: 700px)').matches;
 
+    // Phones skip the 360° scene entirely — a second WebGL context plus a 283 KB
+    // panorama texture is too costly on mobile. The DOM fallback wordmark shows.
+    if (isMobile) return;
+
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({

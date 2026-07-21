@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import styles from './ExtraStudio.module.css';
@@ -17,12 +17,19 @@ export function ExtraStudio() {
   const root = useRef<HTMLElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
+  // Desktop-only reels: the four ~1 MB videos are 4.4 MB — the single biggest
+  // payload on the site — so phones get the section's static gradient instead
+  // and never download them.
+  const [showReels, setShowReels] = useState(false);
+  useEffect(() => {
+    const mobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 820;
+    setShowReels(!mobile);
+  }, []);
 
-  // Only decode/play the reels while the section is near the viewport, and skip
-  // any cell hidden by the mobile layout (keeps it light on phones).
+  // Only decode/play the reels while the section is near the viewport.
   useEffect(() => {
     const el = root.current;
-    if (!el) return;
+    if (!el || !showReels) return;
     const vids = Array.from(el.querySelectorAll('video'));
     const io = new IntersectionObserver(
       (entries) => {
@@ -37,7 +44,7 @@ export function ExtraStudio() {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [showReels]);
 
   // Scroll magic: the reel grid pulls into focus (blur → sharp) and drifts for
   // depth; each line of copy parallaxes at its own rate (layered, transform-only,
@@ -102,11 +109,12 @@ export function ExtraStudio() {
   return (
     <section id="extra-studio" ref={root} className={styles.section}>
       <div ref={grid} className={styles.grid} aria-hidden="true">
-        {REELS.map((src) => (
-          <div key={src} className={styles.cell}>
-            <video className={styles.video} src={src} muted loop playsInline preload="metadata" />
-          </div>
-        ))}
+        {showReels &&
+          REELS.map((src) => (
+            <div key={src} className={styles.cell}>
+              <video className={styles.video} src={src} muted loop playsInline preload="metadata" />
+            </div>
+          ))}
       </div>
 
       <div className={styles.shine} aria-hidden="true" />
