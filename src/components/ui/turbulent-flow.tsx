@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import { gsap } from 'gsap';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cx } from '@/utils/cx';
@@ -135,12 +135,19 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     const renderScale = 0.62;
     const fragmentShader = `#define STEPS ${steps}\n${fragmentBody}`;
 
-    let renderer: THREE.WebGLRenderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
-    } catch {
-      return; // no WebGL — the veil + page background stay
-    }
+    // Load three.js on demand (desktop only) so it never ships to phones, which
+    // returned above. Vite splits import('three') into its own chunk.
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+    void import('three').then((THREE) => {
+      if (disposed || !mountRef.current) return;
+
+      let renderer: THREE.WebGLRenderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
+      } catch {
+        return; // no WebGL — the veil + page background stay
+      }
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
@@ -191,7 +198,8 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     if (reduced) {
       material.uniforms.u_time.value = 12;
       renderer.render(scene, camera);
-      return dispose;
+      cleanup = dispose;
+      return;
     }
 
     let time = 0;
@@ -260,13 +268,19 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     };
     window.addEventListener('mousemove', onMouseMove, { passive: true });
 
+      cleanup = () => {
+        observer.disconnect();
+        document.removeEventListener('visibilitychange', onVisibility);
+        window.removeEventListener('mousemove', onMouseMove);
+        cancelAnimationFrame(frameId);
+        timeline.kill();
+        dispose();
+      };
+    });
+
     return () => {
-      observer.disconnect();
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('mousemove', onMouseMove);
-      cancelAnimationFrame(frameId);
-      timeline.kill();
-      dispose();
+      disposed = true;
+      cleanup?.();
     };
   }, [reduced, maxDpr]);
 

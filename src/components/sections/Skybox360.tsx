@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import styles from './Skybox360.module.css';
 
 /**
@@ -126,7 +126,7 @@ const POINTS_FRAG = /* glsl */ `
   }
 `;
 
-function makeNameTexture(): THREE.CanvasTexture {
+function makeNameTexture(THREE: typeof import('three')): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 2048;
   canvas.height = 512;
@@ -163,16 +163,22 @@ export function Skybox360() {
     // panorama texture is too costly on mobile. The DOM fallback wordmark shows.
     if (isMobile) return;
 
-    let renderer: THREE.WebGLRenderer;
-    try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: false,
-        alpha: false,
-        powerPreference: 'high-performance',
-      });
-    } catch {
-      return; // no WebGL: the DOM fallback title stays visible
-    }
+    // Load three.js on demand (desktop only) so it never ships to phones.
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+    void import('three').then((THREE) => {
+      if (disposed || !root.current || !canvasHost.current) return;
+
+      let renderer: THREE.WebGLRenderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: false,
+          alpha: false,
+          powerPreference: 'high-performance',
+        });
+      } catch {
+        return; // no WebGL: the DOM fallback title stays visible
+      }
     rootEl.dataset.webgl = 'on';
 
     const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.5);
@@ -230,7 +236,7 @@ export function Skybox360() {
     scene.add(points);
 
     // --- The name: camera-attached plane with dissolve/aberration/wave ------
-    const nameTex = makeNameTexture();
+    const nameTex = makeNameTexture(THREE);
     const nameMat = new THREE.ShaderMaterial({
       vertexShader: TEXT_VERT,
       fragmentShader: TEXT_FRAG.replace('__NOISE__', NOISE_GLSL),
@@ -254,7 +260,7 @@ export function Skybox360() {
     // Redraw the name once the display fonts are actually loaded.
     if (document.fonts?.ready) {
       document.fonts.ready.then(() => {
-        nameTex.image = makeNameTexture().image;
+        nameTex.image = makeNameTexture(THREE).image;
         nameTex.needsUpdate = true;
       });
     }
@@ -364,22 +370,28 @@ export function Skybox360() {
       renderer.render(scene, camera);
     }
 
+      cleanup = () => {
+        stop();
+        io.disconnect();
+        document.removeEventListener('visibilitychange', onVis);
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('pointermove', onMouse);
+        window.removeEventListener('resize', onResize);
+        ptsGeo.dispose();
+        ptsMat.dispose();
+        nameMat.dispose();
+        nameTex.dispose();
+        panoTex.dispose();
+        sky.geometry.dispose();
+        (sky.material as THREE.Material).dispose();
+        renderer.dispose();
+        host.removeChild(renderer.domElement);
+      };
+    });
+
     return () => {
-      stop();
-      io.disconnect();
-      document.removeEventListener('visibilitychange', onVis);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('pointermove', onMouse);
-      window.removeEventListener('resize', onResize);
-      ptsGeo.dispose();
-      ptsMat.dispose();
-      nameMat.dispose();
-      nameTex.dispose();
-      panoTex.dispose();
-      sky.geometry.dispose();
-      (sky.material as THREE.Material).dispose();
-      renderer.dispose();
-      host.removeChild(renderer.domElement);
+      disposed = true;
+      cleanup?.();
     };
   }, []);
 
