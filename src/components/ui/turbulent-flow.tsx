@@ -103,65 +103,57 @@ const fragmentShader = `
     return vec2(n1 - n2, n4 - n3) / (2.0 * eps);
   }
 
+  // Cosine palette tuned to the site tokens: deep indigo -> blue -> cyan -> gold.
+  vec3 palette(float t) {
+    return vec3(0.5) + vec3(0.48, 0.46, 0.44) *
+      cos(6.28318 * (vec3(1.0, 1.0, 1.0) * t + vec3(0.62, 0.50, 0.34)));
+  }
+  // ACES filmic tonemap for a graded, non-clipping look.
+  vec3 aces(vec3 x) {
+    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+  }
+
   void main() {
     vec2 uv = vUv;
-    float time = u_time * 0.5;
-    vec3 pos = vec3(uv * u_noise_scale * 1.5, time * 0.1);
+    vec2 p = uv - 0.5;
+    p.x *= u_resolution.x / max(u_resolution.y, 1.0);
+    float time = u_time * 0.4;
 
-    float turb1 = turbulence(pos) * u_turbulence;
-    float turb2 = turbulence(pos * 1.7 + vec3(100.0, 50.0, time * 0.3)) * u_turbulence * 0.3;
-    float turb3 = fbm(pos * 0.8 + vec3(200.0, 100.0, time * 0.15)) * u_turbulence * 0.5;
+    // Domain-warped flow field — two fbm passes, the first warping the second,
+    // gives organic aurora ribbons instead of round blobs.
+    vec3 q = vec3(p * u_noise_scale, time * 0.15);
+    vec2 warp = vec2(fbm(q + vec3(0.0)), fbm(q + vec3(5.2, 1.3, 0.0)));
+    vec3 q2 = vec3(p * u_noise_scale + warp * (u_distortion * 6.0), time * 0.22);
+    float flow = fbm(q2);
+    float ridge = turbulence(q2 * 1.25);
 
-    vec2 curlForce = curl(uv * 2.0, time * 0.5) * 0.25;
-    vec2 distortion = vec2(turb1 + turb2, turb2 + turb3) * u_distortion + curlForce;
-    vec2 distortedUV = uv + distortion;
+    // Color the field by flow value + a soft vertical bias.
+    float t = clamp(0.5 + flow * 0.8 + p.y * 0.35, 0.0, 1.0);
+    vec3 col = palette(t);
 
-    vec2 center1 = vec2(0.5 + sin(time * 0.4) * 0.3 + turb1 * 0.2, 0.75 + cos(time * 0.3) * 0.2 + turb2 * 0.3);
-    vec2 center2 = vec2(0.75 + sin(time * 0.35) * 0.25 + turb2 * 0.8, 0.65 + cos(time * 0.45) * 0.3 + turb3 * 0.61);
-    vec2 center3 = vec2(0.6 + sin(time * 0.5) * 0.2 + turb3 * 0.12, 0.25 + cos(time * 0.4) * 0.28 + turb1 * 0.09);
-    vec2 center4 = vec2(0.15 + sin(time * 0.25) * 0.35 + turb1 * 0.11, 0.8 + cos(time * 0.55) * 0.22 + turb2 * 0.08);
+    // Ribbon brightness — sharpness pulls the bands tighter.
+    float band = smoothstep(0.12, 0.66, ridge * u_turbulence);
+    float glow = pow(band, 1.0 + u_sharpness);
+    vec3 color = col * glow * 1.35;
 
-    float dist1 = length(distortedUV - center1);
-    float dist2 = length(distortedUV - center2);
-    float dist3 = length(distortedUV - center3);
-    float dist4 = length(distortedUV - center4);
+    // Fresnel-style rim where the field folds (iridescent edge highlight).
+    float rim = pow(clamp(1.0 - abs(fbm(q2 + 0.06) - flow) * 6.0, 0.0, 1.0), 2.0);
+    color += palette(t + 0.22) * rim * 0.35;
 
-    float grad1 = 1.0 - smoothstep(0.0, 0.6 - turb1 * 0.2, dist1);
-    float grad2 = 1.0 - smoothstep(0.0, 0.5 - turb2 * 0.15, dist2);
-    float grad3 = 1.0 - smoothstep(0.0, 0.55 - turb3 * 0.18, dist3);
-    float grad4 = 1.0 - smoothstep(0.0, 0.45 - turb1 * 0.12, dist4);
+    // Caustic sparkle — sparse, high-power shimmer.
+    float ca = abs(sin(fbm(vec3(p * 3.0, time * 0.5)) * 6.28318 + time));
+    color += palette(0.52) * pow(ca, 7.0) * 0.09;
 
-    vec3 color1 = vec3(1.0, 0.25, 0.05);
-    vec3 color2 = vec3(0.0, 0.8, 0.95);
-    vec3 color3 = vec3(0.7, 0.1, 0.8);
-    vec3 color4 = vec3(0.2, 0.9, 0.3);
-    vec3 color5 = vec3(1.0, 0.7, 0.0);
+    // Cool base tint so the darks read blue, not black.
+    color += vec3(0.015, 0.025, 0.05) * (0.5 + 0.5 * flow);
 
-    vec3 finalColor = vec3(0.02, 0.02, 0.01);
-    finalColor += color1 * grad1 * (0.9 + turb1 * 0.3);
-    finalColor += color2 * grad2 * (0.8 + turb2 * 0.4);
-    finalColor += color3 * grad3 * (0.7 + turb3 * 0.3);
-    finalColor += color4 * grad4 * (0.6 + turb1 * 0.2);
+    // Grade: filmic tonemap, vignette, and a touch of animated grain (anti-band).
+    color = aces(color * 1.12);
+    color *= smoothstep(1.25, 0.18, length(p));
+    float g = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)) + time) * 43758.5453) - 0.5;
+    color += g * 0.02;
 
-    float interaction1 = grad1 * grad2 * 0.7;
-    float interaction2 = grad2 * grad3 * 0.93;
-    float interaction3 = grad3 * grad4 * 0.35;
-    finalColor += color5 * interaction1;
-    finalColor += mix(color1, color2, 0.5) * interaction2;
-    finalColor += mix(color3, color4, 0.6) * interaction3;
-
-    float noiseDetail = fbm(vec3(uv * 15.0, time * 0.1)) * 0.5;
-    float microTurbulence = turbulence(vec3(uv * 25.0, time * 0.05)) * 0.8;
-    finalColor += (microTurbulence * noiseDetail) * 0.5;
-
-    finalColor = pow(finalColor, vec3(0.9));
-    finalColor *= 1.2;
-
-    float vignette = 1.0 - length(uv - 0.5) * 1.75;
-    vignette = smoothstep(0.11, 1.0, vignette);
-    finalColor *= vignette;
-
-    gl_FragColor = vec4(finalColor, 1.0);
+    gl_FragColor = vec4(color, 1.0);
   }
 `;
 

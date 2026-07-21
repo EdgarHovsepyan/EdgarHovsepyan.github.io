@@ -1,5 +1,5 @@
 import { marqueeTokens } from '../../data/marquee.ts';
-import { useScrollScrub } from '../../hooks/useScrollScrub.ts';
+import { useDraggableMarquee } from '../../hooks/useDraggableMarquee.ts';
 import { cx } from '../../utils/cx.ts';
 import styles from './Marquee.module.css';
 
@@ -22,15 +22,13 @@ function Group() {
 }
 
 export function Marquee() {
-  const scrub = useScrollScrub<HTMLDivElement>();
+  const track = useDraggableMarquee<HTMLDivElement>();
 
   return (
     <section className={styles.marquee} aria-hidden="true">
-      <div ref={scrub} className={styles.scroller}>
-        <div className={styles.track}>
-          <Group />
-          <Group />
-        </div>
+      <div ref={track} className={styles.track}>
+        <Group />
+        <Group />
       </div>
     </section>
   );
