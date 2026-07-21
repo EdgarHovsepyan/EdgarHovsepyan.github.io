@@ -16,6 +16,9 @@
 .gone {
   opacity: 0;
   visibility: hidden;
+  /* Stop the fading full-screen overlay from swallowing clicks (e.g. the hero
+     "Start a conversation" CTA) during its 0.9s fade-out, before it unmounts. */
+  pointer-events: none;
 }
 
 .mark {
