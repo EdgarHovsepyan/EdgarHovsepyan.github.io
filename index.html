@@ -5,27 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#07070A" />
 
-    <!-- Google Analytics 4. Create a property at https://analytics.google.com
-         (Admin → Data Streams → Web), then replace G-XXXXXXXXXX below with your
-         Measurement ID. It stays inert until you do, and never runs on localhost
-         so your own dev visits are not counted. -->
+    <!-- Google Tag Manager (container GTM-WMNFCLL4). Configure GA4 and any other
+         tags inside the GTM workspace. To keep your own visits out of reports,
+         define internal traffic in GA4 (Admin → Data Streams → Configure tag
+         settings → Define internal traffic) rather than editing this snippet. -->
     <script>
-      (function () {
-        var GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
-        if (GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') return; // not configured yet
-        var host = location.hostname;
-        if (host === 'localhost' || host === '127.0.0.1' || host === '') return; // skip dev
-        var s = document.createElement('script');
-        s.async = true;
-        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
-        document.head.appendChild(s);
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        window.gtag = gtag;
-        gtag('js', new Date());
-        gtag('config', GA_MEASUREMENT_ID);
-      })();
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', 'GTM-WMNFCLL4');
     </script>
+    <!-- End Google Tag Manager -->
 
     <title>Edgar Hovsepyan — Senior Game Developer (Web · 2D/3D)</title>
     <meta
@@ -127,6 +123,16 @@
     />
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-WMNFCLL4"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe
+    ></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
