@@ -24,7 +24,7 @@ export function Footer() {
               key={social.href}
               href={social.href}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="me noopener noreferrer"
               className={styles.link}
             >
               {social.label}
