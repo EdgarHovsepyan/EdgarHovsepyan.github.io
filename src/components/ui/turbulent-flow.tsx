@@ -13,147 +13,96 @@ const vertexShader = `
   }
 `;
 
-const fragmentShader = `
+// Volumetric raymarched nebula in the site palette (indigo -> blue -> cyan ->
+// gold). STEPS is injected per device so weaker GPUs compile a cheaper program.
+const fragmentBody = `
+  precision highp float;
   uniform float u_time;
-  uniform vec2 u_resolution;
-  uniform float u_noise_scale;
-  uniform float u_distortion;
-  uniform float u_turbulence;
-  uniform float u_sharpness;
-  varying vec2 vUv;
+  uniform vec2  u_resolution;
+  uniform vec2  u_mouse;       // centered, ~-0.5..0.5
+  uniform float u_noise_scale; // GSAP-driven, subtle base-frequency breathing
+  uniform float u_distortion;  // GSAP-driven, domain-warp amount
+  uniform float u_turbulence;  // GSAP-driven, density gain
+  uniform float u_sharpness;   // GSAP-driven, edge tightness
+  varying vec2  vUv;
 
-  vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-  vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-  vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
-  vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-
-  float snoise(vec3 v) {
-    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-    vec3 i = floor(v + dot(v, C.yyy));
-    vec3 x0 = v - i + dot(i, C.xxx);
-    vec3 g = step(x0.yzx, x0.xyz);
-    vec3 l = 1.0 - g;
-    vec3 i1 = min(g.xyz, l.zxy);
-    vec3 i2 = max(g.xyz, l.zxy);
-    vec3 x1 = x0 - i1 + C.xxx;
-    vec3 x2 = x0 - i2 + C.yyy;
-    vec3 x3 = x0 - D.yyy;
-    i = mod289(i);
-    vec4 p = permute(permute(permute(
-               i.z + vec4(0.0, i1.z, i2.z, 1.0))
-             + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-             + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-    float n_ = 0.142857142857;
-    vec3 ns = n_ * D.wyz - D.xzx;
-    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-    vec4 x_ = floor(j * ns.z);
-    vec4 y_ = floor(j - 7.0 * x_);
-    vec4 x = x_ *ns.x + ns.yyyy;
-    vec4 y = y_ *ns.x + ns.yyyy;
-    vec4 h = 1.0 - abs(x) - abs(y);
-    vec4 b0 = vec4(x.xy, y.xy);
-    vec4 b1 = vec4(x.zw, y.zw);
-    vec4 s0 = floor(b0)*2.0 + 1.0;
-    vec4 s1 = floor(b1)*2.0 + 1.0;
-    vec4 sh = -step(h, vec4(0.0));
-    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
-    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-    vec3 p0 = vec3(a0.xy, h.x);
-    vec3 p1 = vec3(a0.zw, h.y);
-    vec3 p2 = vec3(a1.xy, h.z);
-    vec3 p3 = vec3(a1.zw, h.w);
-    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
-    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-    m = m * m;
-    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+  float hash(vec3 p){ p = fract(p*0.3183099 + 0.1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+  float vnoise(vec3 x){
+    vec3 i = floor(x), f = fract(x); f = f*f*(3.0-2.0*f);
+    return mix(mix(mix(hash(i+vec3(0,0,0)),hash(i+vec3(1,0,0)),f.x),
+                   mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+               mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
+                   mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);
   }
+  float fbm(vec3 p){ float a=0.5, s=0.0; for(int i=0;i<5;i++){ s+=a*vnoise(p); p*=2.02; a*=0.5; } return s; }
+  vec3 pal(float t){ return vec3(0.5) + vec3(0.48,0.46,0.44)*cos(6.28318*(vec3(1.0)*t + vec3(0.62,0.50,0.34))); }
+  vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0); }
+  mat2 rot(float a){ float c=cos(a), s=sin(a); return mat2(c,-s,s,c); }
 
-  float fbm(vec3 p) {
-    float value = 0.0;
-    float amplitude = 0.5;
-    float frequency = 0.6;
-    for(int i = 0; i < 4; i++) {
-      value += amplitude * snoise(p * frequency);
-      amplitude *= 0.5;
-      frequency *= 2.0;
+  void main(){
+    float aspect = u_resolution.x / max(u_resolution.y, 1.0);
+    vec2 uv = (vUv - 0.5); uv.x *= aspect;
+    float T = u_time * 0.4;
+    float ns = mix(0.86, 1.16, clamp((u_noise_scale - 2.5) / 3.5, 0.0, 1.0));
+
+    // Cursor gravitational lens — the field bends toward the pointer.
+    vec2 m = vec2(u_mouse.x * aspect, u_mouse.y);
+    uv -= (uv - m) * 0.05 / (dot(uv - m, uv - m) + 0.35);
+
+    vec3 ro = vec3(0.0, 0.0, -3.2);
+    vec3 rd = normalize(vec3(uv, 1.35));
+    float a = T * 0.03;
+    ro.xz = rot(a) * ro.xz; rd.xz = rot(a) * rd.xz;
+    ro.y += sin(T * 0.15) * 0.12;
+
+    vec3 acc = vec3(0.0); float trans = 1.0; float t = 1.4;
+    for (int i = 0; i < STEPS; i++) {
+      vec3 p = ro + rd * t;
+      vec3 w = vec3(
+        fbm(p * 0.6 * ns + vec3(0.0, 0.0, T*0.05)),
+        fbm(p * 0.6 * ns + vec3(5.2, 1.3, T*0.05)),
+        fbm(p * 0.6 * ns + vec3(9.1, 4.7, T*0.05)));
+      vec3 q = p + (u_distortion * 6.0) * (w - 0.5);
+      float f = fbm(q * 0.85 * ns + vec3(0.0, 0.0, T*0.06));
+      float dens = smoothstep(0.5, 0.86, f) * (0.8 + u_turbulence * 0.5);
+      dens *= smoothstep(2.6, 0.4, length(p.xy));
+      if (dens > 0.001) {
+        float ci = clamp(0.28 + p.y*0.14 + f*0.7, 0.0, 1.0);
+        vec3 col = pal(ci);
+        float grad = fbm(q * 0.85 * ns + 0.06) - f;
+        float fres = pow(clamp(1.0 - abs(grad) * 7.0, 0.0, 1.0), 2.5);
+        col += pal(ci + 0.25) * fres * 0.5;
+        float aStep = dens * (0.14 + u_sharpness * 0.02);
+        acc += trans * col * aStep * (1.3 + fres);
+        trans *= 1.0 - aStep;
+        if (trans < 0.03) break;
+      }
+      t += 0.09 + (1.0 - dens) * 0.05;
     }
-    return value;
-  }
 
-  float turbulence(vec3 p) {
-    float t = 0.0;
-    float amplitude = 1.0;
-    float frequency = 0.4;
-    for(int i = 0; i < 3; i++) {
-      t += abs(snoise(p * frequency)) * amplitude;
-      amplitude *= 0.5;
-      frequency *= 2.0;
+    // Parallax particle depth — two hashed layers.
+    float star = 0.0;
+    for (int L = 0; L < 2; L++) {
+      float sc = 7.0 + float(L) * 10.0;
+      vec2 gv = uv * sc + vec2(T * (0.03 + 0.02 * float(L)), -T * 0.015);
+      vec2 id = floor(gv); vec2 fv = fract(gv) - 0.5;
+      float h = hash(vec3(id, float(L)));
+      star += smoothstep(0.06, 0.0, length(fv)) * step(0.9, h) * (0.5 + 0.5 * sin(T*2.0 + h*30.0));
     }
-    return t;
-  }
+    acc += pal(0.62) * star * 0.4;
 
-  vec2 curl(vec2 p, float time) {
-    float eps = 0.01;
-    float n1 = snoise(vec3(p.x, p.y + eps, time));
-    float n2 = snoise(vec3(p.x, p.y - eps, time));
-    float n3 = snoise(vec3(p.x + eps, p.y, time));
-    float n4 = snoise(vec3(p.x - eps, p.y, time));
-    return vec2(n1 - n2, n4 - n3) / (2.0 * eps);
-  }
+    vec3 c = acc;
+    float r = length(uv);
+    // Chromatic aberration + cool edge bloom.
+    c.r *= 1.0 + 0.08 * r * r; c.b *= 1.0 - 0.05 * r * r;
+    c += vec3(0.015, 0.025, 0.05) * r;
+    // ACES tonemap, vignette, grain.
+    c = aces(c * 1.12);
+    c *= smoothstep(1.3, 0.2, r);
+    float g = hash(vec3(gl_FragCoord.xy, fract(T))) - 0.5;
+    c += g * 0.025;
 
-  // Cosine palette tuned to the site tokens: deep indigo -> blue -> cyan -> gold.
-  vec3 palette(float t) {
-    return vec3(0.5) + vec3(0.48, 0.46, 0.44) *
-      cos(6.28318 * (vec3(1.0, 1.0, 1.0) * t + vec3(0.62, 0.50, 0.34)));
-  }
-  // ACES filmic tonemap for a graded, non-clipping look.
-  vec3 aces(vec3 x) {
-    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
-  }
-
-  void main() {
-    vec2 uv = vUv;
-    vec2 p = uv - 0.5;
-    p.x *= u_resolution.x / max(u_resolution.y, 1.0);
-    float time = u_time * 0.4;
-
-    // Domain-warped flow field — two fbm passes, the first warping the second,
-    // gives organic aurora ribbons instead of round blobs.
-    vec3 q = vec3(p * u_noise_scale, time * 0.15);
-    vec2 warp = vec2(fbm(q + vec3(0.0)), fbm(q + vec3(5.2, 1.3, 0.0)));
-    vec3 q2 = vec3(p * u_noise_scale + warp * (u_distortion * 6.0), time * 0.22);
-    float flow = fbm(q2);
-    float ridge = turbulence(q2 * 1.25);
-
-    // Color the field by flow value + a soft vertical bias.
-    float t = clamp(0.5 + flow * 0.8 + p.y * 0.35, 0.0, 1.0);
-    vec3 col = palette(t);
-
-    // Ribbon brightness — sharpness pulls the bands tighter.
-    float band = smoothstep(0.12, 0.66, ridge * u_turbulence);
-    float glow = pow(band, 1.0 + u_sharpness);
-    vec3 color = col * glow * 1.35;
-
-    // Fresnel-style rim where the field folds (iridescent edge highlight).
-    float rim = pow(clamp(1.0 - abs(fbm(q2 + 0.06) - flow) * 6.0, 0.0, 1.0), 2.0);
-    color += palette(t + 0.22) * rim * 0.35;
-
-    // Caustic sparkle — sparse, high-power shimmer.
-    float ca = abs(sin(fbm(vec3(p * 3.0, time * 0.5)) * 6.28318 + time));
-    color += palette(0.52) * pow(ca, 7.0) * 0.09;
-
-    // Cool base tint so the darks read blue, not black.
-    color += vec3(0.015, 0.025, 0.05) * (0.5 + 0.5 * flow);
-
-    // Grade: filmic tonemap, vignette, and a touch of animated grain (anti-band).
-    color = aces(color * 1.12);
-    color *= smoothstep(1.25, 0.18, length(p));
-    float g = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)) + time) * 43758.5453) - 0.5;
-    color += g * 0.02;
-
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(c, 1.0);
   }
 `;
 
@@ -170,18 +119,29 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     const mount = mountRef.current;
     if (!mount) return;
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance',
-    });
+    // Device tier: fewer march steps + lower internal resolution on phones and
+    // low-core machines, so the volumetric shader stays smooth everywhere.
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
+    const mobile = coarse || window.innerWidth < 820;
+    const cores = navigator.hardwareConcurrency || 8;
+    const steps = mobile ? 14 : cores <= 4 ? 26 : 40;
+    const renderScale = mobile ? 0.5 : 0.66;
+    const fragmentShader = `#define STEPS ${steps}\n${fragmentBody}`;
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
+    } catch {
+      return; // no WebGL — the veil + page background stay
+    }
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     const sizeOf = () => [mount.clientWidth || 1, mount.clientHeight || 1] as const;
     const [initialWidth, initialHeight] = sizeOf();
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
+    const pixelRatio = () => Math.min(window.devicePixelRatio, maxDpr) * renderScale;
+    renderer.setPixelRatio(pixelRatio());
     renderer.setSize(initialWidth, initialHeight);
     mount.appendChild(renderer.domElement);
 
@@ -191,6 +151,7 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
       uniforms: {
         u_time: { value: 0 },
         u_resolution: { value: new THREE.Vector2(initialWidth, initialHeight) },
+        u_mouse: { value: new THREE.Vector2(0, 0) },
         u_noise_scale: { value: 4.0 },
         u_distortion: { value: 0.15 },
         u_turbulence: { value: 0.8 },
@@ -203,13 +164,14 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
 
     const resize = () => {
       const [width, height] = sizeOf();
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
+      renderer.setPixelRatio(pixelRatio());
       renderer.setSize(width, height);
-      material.uniforms.u_resolution.value.set(width, height);
+      material.uniforms.u_resolution.value.set(width * pixelRatio(), height * pixelRatio());
       renderer.render(scene, camera);
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(mount);
+    material.uniforms.u_resolution.value.set(initialWidth * pixelRatio(), initialHeight * pixelRatio());
 
     const dispose = () => {
       resizeObserver.disconnect();
@@ -220,6 +182,7 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     };
 
     if (reduced) {
+      material.uniforms.u_time.value = 12;
       renderer.render(scene, camera);
       return dispose;
     }
@@ -228,23 +191,32 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     let frameId = 0;
     let running = false;
     let onScreen = false;
+    // Smoothed pointer for the lens.
+    let mx = 0;
+    let my = 0;
+    let tmx = 0;
+    let tmy = 0;
 
     const tick = () => {
       time += 0.008;
+      mx += (tmx - mx) * 0.06;
+      my += (tmy - my) * 0.06;
       material.uniforms.u_time.value = time;
+      material.uniforms.u_mouse.value.set(mx, my);
       renderer.render(scene, camera);
       if (running) frameId = requestAnimationFrame(tick);
     };
 
+    // GSAP "breathing" — slow drift of the field parameters.
     const timeline = gsap.timeline({ repeat: -1 });
     timeline
       .to(material.uniforms.u_turbulence, { value: 1.2, duration: 6, ease: 'sine.inOut' })
       .to(material.uniforms.u_noise_scale, { value: 6.0, duration: 8, ease: 'power2.inOut' }, 0)
-      .to(material.uniforms.u_distortion, { value: 0.25, duration: 7, ease: 'power1.inOut' }, 1)
+      .to(material.uniforms.u_distortion, { value: 0.24, duration: 7, ease: 'power1.inOut' }, 1)
       .to(material.uniforms.u_sharpness, { value: 1.8, duration: 5, ease: 'power2.inOut' }, 2)
-      .to(material.uniforms.u_turbulence, { value: 0.4, duration: 9, ease: 'sine.inOut' })
-      .to(material.uniforms.u_noise_scale, { value: 2.5, duration: 10, ease: 'power2.inOut' }, '-=4')
-      .to(material.uniforms.u_distortion, { value: 0.08, duration: 8, ease: 'power1.inOut' }, '-=6')
+      .to(material.uniforms.u_turbulence, { value: 0.5, duration: 9, ease: 'sine.inOut' })
+      .to(material.uniforms.u_noise_scale, { value: 2.8, duration: 10, ease: 'power2.inOut' }, '-=4')
+      .to(material.uniforms.u_distortion, { value: 0.1, duration: 8, ease: 'power1.inOut' }, '-=6')
       .to(material.uniforms.u_sharpness, { value: 1.0, duration: 7, ease: 'power2.inOut' }, '-=5');
 
     const start = () => {
@@ -276,15 +248,10 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     document.addEventListener('visibilitychange', onVisibility);
 
     const onMouseMove = (event: MouseEvent) => {
-      const x = (event.clientX / window.innerWidth) * 2 - 1;
-      const y = -(event.clientY / window.innerHeight) * 2 + 1;
-      const influence = Math.sqrt(x * x + y * y) * 0.3;
-      material.uniforms.u_turbulence.value = Math.min(
-        material.uniforms.u_turbulence.value + influence * 0.1,
-        3.0,
-      );
+      tmx = event.clientX / window.innerWidth - 0.5;
+      tmy = -(event.clientY / window.innerHeight - 0.5);
     };
-    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
 
     return () => {
       observer.disconnect();
