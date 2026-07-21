@@ -3,6 +3,13 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Static brand backdrop — the sole background on mobile (where the WebGL
+     raymarch is skipped for performance) and the instant first paint on desktop
+     before the shader canvas fades in. */
+  background:
+    radial-gradient(120% 90% at 78% 12%, rgba(77, 124, 255, 0.16), transparent 60%),
+    radial-gradient(100% 90% at 12% 96%, rgba(34, 211, 238, 0.1), transparent 62%),
+    linear-gradient(160deg, #0a0b12, #07070a 60%);
 }
 
 .shader {

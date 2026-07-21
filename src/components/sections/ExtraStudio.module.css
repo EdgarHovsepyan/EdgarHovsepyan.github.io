@@ -52,7 +52,11 @@
   width: 26%;
   z-index: 1;
   pointer-events: none;
-  transform: skewX(-12deg);
+  /* Composited sweep: animate transform (GPU) instead of `left` (which forces a
+     layout on every frame — flagged by Lighthouse). translateX is in element
+     widths (26% of the section), so 654% ≈ the old -35% → 135% travel. */
+  transform: translateX(0) skewX(-12deg);
+  will-change: transform;
   mix-blend-mode: screen;
   background: linear-gradient(
     105deg,
@@ -67,13 +71,11 @@
 
 @keyframes shineSweep {
   0% {
-    left: -35%;
+    transform: translateX(0) skewX(-12deg);
   }
-  16% {
-    left: 135%;
-  }
+  16%,
   100% {
-    left: 135%;
+    transform: translateX(654%) skewX(-12deg);
   }
 }
 

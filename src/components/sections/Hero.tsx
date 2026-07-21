@@ -35,7 +35,15 @@ export function Hero() {
 
         <div className={styles.line}>
           <div className={styles.lineIn}>
-            <img className={styles.wordmarkImg} src={profile.wordmark} alt={profile.wordmarkAlt} />
+            <img
+              className={styles.wordmarkImg}
+              src={profile.wordmark}
+              alt={profile.wordmarkAlt}
+              width={681}
+              height={586}
+              fetchPriority="high"
+              decoding="async"
+            />
           </div>
         </div>
 
