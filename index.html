@@ -72,15 +72,36 @@
     <meta name="twitter:image" content="https://edgarhovsepyan.github.io/assets/og-image.png" />
     <meta name="twitter:image:alt" content="Edgar Hovsepyan — Senior Game Developer (Web · 2D/3D)" />
 
-    <!-- Structured data: tells Google this is a real person and links every profile together -->
+    <!-- Structured data: tells Google this is a real person, which Edgar Hovsepyan
+         (the Pascal Gaming game developer), and links every profile together so the
+         search entity is disambiguated from other people with the same name. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Person",
+        "@id": "https://edgarhovsepyan.github.io/#edgar-hovsepyan",
         "name": "Edgar Hovsepyan",
+        "alternateName": ["ԷԴԳԱՐ ՀՈՎՍԵՓՅԱՆ", "Edgar Hovsepyan game developer"],
         "url": "https://edgarhovsepyan.github.io/",
+        "mainEntityOfPage": "https://edgarhovsepyan.github.io/",
         "image": "https://edgarhovsepyan.github.io/assets/og-image.png",
         "jobTitle": "Senior Game Developer",
+        "hasOccupation": {
+          "@type": "Occupation",
+          "name": "Game Developer (Web · 2D/3D)",
+          "occupationalCategory": "15-1254.00 Web Developers",
+          "skills": "PixiJS, Three.js, WebGL, WebGPU, TypeScript, GLSL/WGSL shaders, Spine, slot & casino game math, Cocos Creator, Unity"
+        },
+        "worksFor": {
+          "@type": "Organization",
+          "name": "Pascal Gaming",
+          "parentOrganization": { "@type": "Organization", "name": "BetConstruct" }
+        },
+        "alumniOf": {
+          "@type": "CollegeOrUniversity",
+          "name": "National Polytechnic University of Armenia"
+        },
+        "nationality": { "@type": "Country", "name": "Armenia" },
         "description": "Senior game developer building real-time 2D/3D games for the web in TypeScript, PixiJS, Three.js and WebGL/WebGPU. 7+ years, 50+ titles shipped end to end, with deep iGaming and metaverse platform experience.",
         "email": "mailto:edgarhovsepyan94@gmail.com",
         "award": [
@@ -103,6 +124,9 @@
           "TypeScript",
           "Spine Animation",
           "Slot Games",
+          "Casino Games",
+          "Cocos Creator",
+          "Unity",
           "AI Engineering"
         ],
         "sameAs": [
@@ -110,6 +134,19 @@
           "https://github.com/EdgarHovsepyan",
           "https://t.me/Dev_context"
         ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://edgarhovsepyan.github.io/#website",
+        "url": "https://edgarhovsepyan.github.io/",
+        "name": "Edgar Hovsepyan — Senior Game Developer",
+        "description": "Portfolio of Edgar Hovsepyan, senior game developer (web 2D/3D): PixiJS, Three.js, WebGL/WebGPU, and shipped iGaming titles.",
+        "inLanguage": "en",
+        "about": { "@id": "https://edgarhovsepyan.github.io/#edgar-hovsepyan" },
+        "author": { "@id": "https://edgarhovsepyan.github.io/#edgar-hovsepyan" }
       }
     </script>
 
