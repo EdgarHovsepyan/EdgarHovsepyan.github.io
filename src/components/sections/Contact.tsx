@@ -19,7 +19,7 @@ const ICONS: Record<string, string> = {
 function SocialButton({ label, href }: { label: string; href: string }) {
   const ref = useMagnetic<HTMLAnchorElement>();
   return (
-    <a ref={ref} href={href} target="_blank" rel="noopener noreferrer" className={styles.social}>
+    <a ref={ref} href={href} target="_blank" rel="me noopener noreferrer" className={styles.social}>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d={ICONS[label]} />
       </svg>
@@ -89,7 +89,7 @@ export function Contact() {
                   key={social.href}
                   href={social.href}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="me noopener noreferrer"
                   className={styles.detailLink}
                 >
                   {social.label}
