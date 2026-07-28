@@ -125,14 +125,12 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     const mobile = coarse || window.innerWidth < 820;
     const cores = navigator.hardwareConcurrency || 8;
 
-    // Mobile / touch devices skip the WebGL raymarch entirely — a full-screen
-    // volumetric fragment shader saturates the main thread and GPU on weak
-    // phones (it was the dominant cost in the mobile Lighthouse profile). The
-    // static CSS gradient in Background.module.css is the backdrop there.
-    if (mobile) return;
-
-    const steps = cores <= 4 ? 24 : 34;
-    const renderScale = 0.62;
+    // Quality tier: the raymarch runs everywhere, but phones use far fewer steps,
+    // a lower internal resolution and a ~30fps cap so it stays smooth. The CSS
+    // aurora paints instantly underneath while three.js + this shader load.
+    const steps = mobile ? 7 : cores <= 4 ? 24 : 34;
+    const renderScale = mobile ? 0.42 : 0.62;
+    const minFrameMs = mobile ? 33 : 16;
     const fragmentShader = `#define STEPS ${steps}\n${fragmentBody}`;
 
     // Load three.js on demand (desktop only) so it never ships to phones, which
@@ -212,14 +210,17 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     let tmx = 0;
     let tmy = 0;
 
-    const tick = () => {
-      time += 0.008;
+    let lastFrame = 0;
+    const tick = (now: number) => {
+      if (running) frameId = requestAnimationFrame(tick);
+      if (now - lastFrame < minFrameMs) return; // frame-rate cap (~30fps on mobile)
+      lastFrame = now;
+      time += 0.008 * (minFrameMs / 16.67);
       mx += (tmx - mx) * 0.06;
       my += (tmy - my) * 0.06;
       material.uniforms.u_time.value = time;
       material.uniforms.u_mouse.value.set(mx, my);
       renderer.render(scene, camera);
-      if (running) frameId = requestAnimationFrame(tick);
     };
 
     // GSAP "breathing" — slow drift of the field parameters.

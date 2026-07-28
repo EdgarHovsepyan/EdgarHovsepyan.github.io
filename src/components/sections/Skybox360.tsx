@@ -165,11 +165,9 @@ export function Skybox360() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.matchMedia('(max-width: 700px)').matches;
 
-    // Phones skip the 360° scene entirely — a second WebGL context plus a 283 KB
-    // panorama texture is too costly on mobile. The DOM fallback wordmark shows.
-    if (isMobile) return;
-
-    // Load three.js on demand (desktop only) so it never ships to phones.
+    // The 360° scene runs on mobile too (lower DPR, the smaller panorama and a
+    // reduced particle count below). The poster art shows until it takes over.
+    // Load three.js on demand so it is fetched only when the effect runs.
     let disposed = false;
     let cleanup: (() => void) | undefined;
     void import('three').then((THREE) => {
