@@ -37,6 +37,12 @@
   opacity: 0.62;
   will-change: transform;
   animation: kenburns 26s ease-in-out infinite alternate;
+  transition: opacity 0.8s var(--ease);
+}
+
+/* Once the WebGL scene reports in, fade the poster out — the canvas covers it. */
+.section[data-webgl='on'] .poster {
+  opacity: 0;
 }
 
 @keyframes kenburns {
