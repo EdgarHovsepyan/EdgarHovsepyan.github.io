@@ -128,8 +128,8 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     // Quality tier: the raymarch runs everywhere, but phones use far fewer steps,
     // a lower internal resolution and a ~30fps cap so it stays smooth. The CSS
     // aurora paints instantly underneath while three.js + this shader load.
-    const steps = mobile ? 7 : cores <= 4 ? 24 : 34;
-    const renderScale = mobile ? 0.42 : 0.62;
+    const steps = mobile ? 12 : cores <= 4 ? 24 : 34;
+    const renderScale = mobile ? 0.5 : 0.62;
     const minFrameMs = mobile ? 33 : 16;
     const fragmentShader = `#define STEPS ${steps}\n${fragmentBody}`;
 
@@ -202,17 +202,19 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
 
     let time = 0;
     let frameId = 0;
-    let running = false;
-    let onScreen = false;
     // Smoothed pointer for the lens.
     let mx = 0;
     let my = 0;
     let tmx = 0;
     let tmy = 0;
-
     let lastFrame = 0;
+
+    // Self-scheduling loop — always runs while mounted; it only skips the render
+    // when the tab is hidden or within the frame-rate cap. No external gating
+    // (observer / running flag) that could ever freeze it.
     const tick = (now: number) => {
-      if (running) frameId = requestAnimationFrame(tick);
+      frameId = requestAnimationFrame(tick);
+      if (document.hidden) return;
       if (now - lastFrame < minFrameMs) return; // frame-rate cap (~30fps on mobile)
       lastFrame = now;
       time += 0.008 * (minFrameMs / 16.67);
@@ -235,43 +237,17 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
       .to(material.uniforms.u_distortion, { value: 0.1, duration: 8, ease: 'power1.inOut' }, '-=6')
       .to(material.uniforms.u_sharpness, { value: 1.0, duration: 7, ease: 'power2.inOut' }, '-=5');
 
-    const start = () => {
-      if (running) return;
-      running = true;
-      timeline.play();
-      frameId = requestAnimationFrame(tick);
-    };
-    const stop = () => {
-      running = false;
-      cancelAnimationFrame(frameId);
-      timeline.pause();
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        onScreen = entries[0]?.isIntersecting ?? false;
-        if (onScreen && !document.hidden) start();
-        else stop();
-      },
-      { rootMargin: '120px' },
-    );
-    observer.observe(mount);
-
-    const onVisibility = () => {
-      if (document.hidden) stop();
-      else if (onScreen) start();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-
     const onMouseMove = (event: MouseEvent) => {
       tmx = event.clientX / window.innerWidth - 0.5;
       tmy = -(event.clientY / window.innerHeight - 0.5);
     };
     window.addEventListener('mousemove', onMouseMove, { passive: true });
 
+    // Start the loop and the GSAP "breathing" immediately and unconditionally.
+    timeline.play();
+    frameId = requestAnimationFrame(tick);
+
       cleanup = () => {
-        observer.disconnect();
-        document.removeEventListener('visibilitychange', onVisibility);
         window.removeEventListener('mousemove', onMouseMove);
         cancelAnimationFrame(frameId);
         timeline.kill();
