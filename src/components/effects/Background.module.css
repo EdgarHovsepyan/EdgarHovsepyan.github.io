@@ -12,14 +12,81 @@
     linear-gradient(160deg, #0a0b12, #07070a 60%);
 }
 
+/* Animated aurora: two blurred brand-color blobs drifting on a long ease-in-out
+   loop. transform + opacity only → GPU-composited, no layout/paint per frame. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.aurora::before,
+.aurora::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(52px);
+  will-change: transform, opacity;
+}
+
+.aurora::before {
+  width: 78vw;
+  height: 78vw;
+  left: -14vw;
+  top: -12vh;
+  background: radial-gradient(circle, rgba(77, 124, 255, 0.36), transparent 66%);
+  animation: auroraA 26s ease-in-out infinite alternate;
+}
+
+.aurora::after {
+  width: 66vw;
+  height: 66vw;
+  right: -16vw;
+  bottom: -16vh;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.26), transparent 66%);
+  animation: auroraB 34s ease-in-out infinite alternate;
+}
+
+@keyframes auroraA {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  to {
+    transform: translate3d(14vw, 9vh, 0) scale(1.28);
+    opacity: 1;
+  }
+}
+
+@keyframes auroraB {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.12);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate3d(-12vw, -7vh, 0) scale(1);
+    opacity: 1;
+  }
+}
+
 .shader {
   position: absolute;
   inset: 0;
+  z-index: 1;
   opacity: 0.5;
 }
 
 .veil {
   position: absolute;
   inset: 0;
+  z-index: 2;
   background: radial-gradient(130% 130% at 50% 28%, rgba(7, 7, 10, 0.42), rgba(7, 7, 10, 0.84) 74%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after {
+    animation: none;
+  }
 }

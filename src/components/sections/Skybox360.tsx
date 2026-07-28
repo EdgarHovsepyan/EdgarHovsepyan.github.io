@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import styles from './Skybox360.module.css';
 
@@ -150,6 +150,12 @@ export function Skybox360() {
   const root = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const canvasHost = useRef<HTMLDivElement>(null);
+  // Phones skip the WebGL scene; show the real panorama art with a Ken-Burns pan
+  // instead (loaded only on mobile so desktop never fetches the mobile texture).
+  const [showPoster, setShowPoster] = useState(false);
+  useEffect(() => {
+    setShowPoster(window.matchMedia('(max-width: 700px)').matches);
+  }, []);
 
   useEffect(() => {
     const rootEl = root.current;
@@ -403,6 +409,16 @@ export function Skybox360() {
     >
       <div ref={stage} className={styles.stage}>
         <div ref={canvasHost} className={styles.canvasHost} />
+        {showPoster && (
+          <img
+            className={styles.poster}
+            src="/assets/skybox/pano-mobile.webp"
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            loading="lazy"
+          />
+        )}
         <div className={styles.fallback} aria-hidden="true">
           <span className={styles.fallbackName}>Edgar Hovsepyan</span>
           <span className={styles.fallbackRole}>Senior Game Developer</span>
