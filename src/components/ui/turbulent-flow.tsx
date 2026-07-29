@@ -24,6 +24,7 @@ const fragmentBody = `
   uniform float u_distortion;  // GSAP-driven, domain-warp amount
   uniform float u_turbulence;  // GSAP-driven, density gain
   uniform float u_sharpness;   // GSAP-driven, edge tightness
+  uniform float u_vel;         // smoothed scroll energy 0..1 — the field reacts to it
   varying vec2  vUv;
 
   float hash(vec3 p){ p = fract(p*0.3183099 + 0.1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -62,7 +63,8 @@ const fragmentBody = `
         fbm(p * 0.6 * ns + vec3(0.0, 0.0, T*0.05)),
         fbm(p * 0.6 * ns + vec3(5.2, 1.3, T*0.05)),
         fbm(p * 0.6 * ns + vec3(9.1, 4.7, T*0.05)));
-      vec3 q = p + (u_distortion * 6.0) * (w - 0.5);
+      // Scroll energy stirs the medium: extra domain-warp while the user moves.
+      vec3 q = p + (u_distortion * 6.0 + u_vel * 3.2) * (w - 0.5);
       float f = fbm(q * 0.85 * ns + vec3(0.0, 0.0, T*0.06));
       float dens = smoothstep(0.5, 0.86, f) * (0.8 + u_turbulence * 0.5);
       dens *= smoothstep(2.6, 0.4, length(p.xy));
@@ -93,9 +95,11 @@ const fragmentBody = `
 
     vec3 c = acc;
     float r = length(uv);
-    // Chromatic aberration + cool edge bloom.
-    c.r *= 1.0 + 0.08 * r * r; c.b *= 1.0 - 0.05 * r * r;
-    c += vec3(0.015, 0.025, 0.05) * r;
+    // Chromatic aberration + cool edge bloom; scroll energy surges the split
+    // (a subtle "speed" cue at the frame edges while the page is in motion).
+    float ab = 0.08 + u_vel * 0.22;
+    c.r *= 1.0 + ab * r * r; c.b *= 1.0 - (0.05 + u_vel * 0.12) * r * r;
+    c += vec3(0.015, 0.025, 0.05) * r * (1.0 + u_vel * 0.8);
     // ACES tonemap, vignette, grain.
     c = aces(c * 1.12);
     c *= smoothstep(1.3, 0.2, r);
@@ -168,6 +172,7 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
         u_distortion: { value: 0.15 },
         u_turbulence: { value: 0.8 },
         u_sharpness: { value: 1.4 },
+        u_vel: { value: 0 },
       },
     });
     const geometry = new THREE.PlaneGeometry(2, 2);
@@ -208,6 +213,11 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     let tmx = 0;
     let tmy = 0;
     let lastFrame = 0;
+    // Scroll energy: impulses from the scroll handler, eased + bled off in the
+    // tick, fed to the shader as u_vel. One float — zero extra GPU cost.
+    let velImpulse = 0;
+    let vel = 0;
+    let lastScrollY = window.scrollY;
 
     // Self-scheduling loop — always runs while mounted; it only skips the render
     // when the tab is hidden or within the frame-rate cap. No external gating
@@ -217,11 +227,17 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
       if (document.hidden) return;
       if (now - lastFrame < minFrameMs) return; // frame-rate cap (~30fps on mobile)
       lastFrame = now;
-      time += 0.008 * (minFrameMs / 16.67);
+      // Scroll energy: ease toward the latest impulse, then bleed the impulse
+      // away so the field settles ~1s after the user stops scrolling.
+      vel += (velImpulse - vel) * 0.1;
+      velImpulse *= 0.92;
+      // Time flows faster while scrolling — the nebula visibly "stirs".
+      time += 0.008 * (minFrameMs / 16.67) * (1 + vel * 2.2);
       mx += (tmx - mx) * 0.06;
       my += (tmy - my) * 0.06;
       material.uniforms.u_time.value = time;
       material.uniforms.u_mouse.value.set(mx, my);
+      material.uniforms.u_vel.value = vel;
       renderer.render(scene, camera);
     };
 
@@ -243,12 +259,21 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     };
     window.addEventListener('mousemove', onMouseMove, { passive: true });
 
+    const onScroll = () => {
+      const y = window.scrollY;
+      // Normalize: a fast flick ≈ one viewport per second → impulse ~1.
+      velImpulse = Math.min(1, velImpulse + Math.abs(y - lastScrollY) / window.innerHeight);
+      lastScrollY = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
     // Start the loop and the GSAP "breathing" immediately and unconditionally.
     timeline.play();
     frameId = requestAnimationFrame(tick);
 
       cleanup = () => {
         window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('scroll', onScroll);
         cancelAnimationFrame(frameId);
         timeline.kill();
         dispose();
