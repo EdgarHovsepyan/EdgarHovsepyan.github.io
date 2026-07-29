@@ -106,8 +106,8 @@ const POINTS_VERT = /* glsl */ `
     vec3 p = position;
     p.y += sin(uTime * 0.35 + aPhase) * 0.6;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    vTwinkle = (0.65 + 0.35 * sin(uTime * (1.2 + aPhase * 0.1) + aPhase * 7.0)) * (1.0 + uVel * 0.6);
-    gl_PointSize = aSize * uPixelRatio * (26.0 / -mv.z) * (1.0 + uVel * 0.9);
+    vTwinkle = (0.65 + 0.35 * sin(uTime * (1.2 + aPhase * 0.1) + aPhase * 7.0)) * (1.0 + uVel * 1.1);
+    gl_PointSize = aSize * uPixelRatio * (26.0 / -mv.z) * (1.0 + uVel * 1.6);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -323,6 +323,16 @@ export function Skybox360() {
       yaw += (targetYaw - yaw) * 0.06;
       pitch += (targetPitch - pitch) * 0.06;
       camera.rotation.set(pitch, -yaw, roll, 'YXZ');
+
+      // The "boom": scroll velocity punches the FOV like a dolly-zoom — the
+      // world bursts wider under fast scrolling and breathes back at rest — and
+      // the panorama itself gets dragged slightly by the motion.
+      const targetFov = 72 + velocity * 10;
+      if (Math.abs(camera.fov - targetFov) > 0.03) {
+        camera.fov += (targetFov - camera.fov) * 0.1;
+        camera.updateProjectionMatrix();
+      }
+      sky.rotation.y += dv * 0.05;
 
       mouse.x += (mouse.tx - mouse.x) * 0.05;
       mouse.y += (mouse.ty - mouse.y) * 0.05;
