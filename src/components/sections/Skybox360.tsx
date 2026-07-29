@@ -112,6 +112,48 @@ const POINTS_VERT = /* glsl */ `
   }
 `;
 
+const SKY_VERT = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+// The panorama as a living medium: liquid melt, velocity-driven chromatic
+// dream-split, hue-cycling keyed to journey progress, breathing exposure.
+// Three texture taps, no extra passes.
+const SKY_FRAG = /* glsl */ `
+  uniform sampler2D uMap;
+  uniform float uTime;
+  uniform float uVel;   // scroll energy 0..1
+  uniform float uProg;  // journey progress 0..1
+  varying vec2 vUv;
+  vec3 hueShift(vec3 c, float a) {
+    const vec3 k = vec3(0.57735);
+    float ca = cos(a), sa = sin(a);
+    return c * ca + cross(k, c) * sa + k * dot(k, c) * (1.0 - ca);
+  }
+  void main() {
+    vec2 uv = vUv;
+    // Liquid melt — a faint heat-haze at rest that liquefies under scroll.
+    float melt = 0.0014 + uVel * 0.006;
+    uv.x += sin(uv.y * 28.0 + uTime * 0.5) * melt;
+    uv.y += cos(uv.x * 22.0 - uTime * 0.4) * melt;
+    // Dream-split — motion separates the color channels like altered vision.
+    float split = 0.0007 + uVel * 0.0045;
+    vec3 col;
+    col.r = texture2D(uMap, uv + vec2(split, 0.0)).r;
+    col.g = texture2D(uMap, uv).g;
+    col.b = texture2D(uMap, uv - vec2(split, 0.0)).b;
+    // Hue-cycle — the spectrum drifts with the journey and surges with speed.
+    col = hueShift(col, sin(uProg * 6.28318) * 0.30 + uTime * 0.02 + uVel * 0.45);
+    // Breathing exposure — the slow inhale/exhale that makes it feel alive.
+    col *= 1.0 + 0.05 * sin(uTime * 0.55) + uVel * 0.22;
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+
 const POINTS_FRAG = /* glsl */ `
   varying float vHue;
   varying float vTwinkle;
@@ -198,13 +240,23 @@ export function Skybox360() {
     // --- Skybox: equirect panorama on an inverted sphere -------------------
     const panoUrl = isMobile ? '/assets/skybox/pano-mobile.webp' : '/assets/skybox/pano.webp';
     const panoTex = new THREE.TextureLoader().load(panoUrl, (t) => {
-      t.colorSpace = THREE.SRGBColorSpace;
-      t.mapping = THREE.EquirectangularReflectionMapping;
+      // RepeatWrapping lets the liquid-melt UV warp cross the seam cleanly.
+      t.wrapS = THREE.RepeatWrapping;
+      t.needsUpdate = true;
     });
-    const sky = new THREE.Mesh(
-      new THREE.SphereGeometry(60, 48, 32),
-      new THREE.MeshBasicMaterial({ map: panoTex, side: THREE.BackSide }),
-    );
+    const skyMat = new THREE.ShaderMaterial({
+      vertexShader: SKY_VERT,
+      fragmentShader: SKY_FRAG,
+      uniforms: {
+        uMap: { value: panoTex },
+        uTime: { value: 0 },
+        uVel: { value: 0 },
+        uProg: { value: 0 },
+      },
+      side: THREE.BackSide,
+      depthWrite: false,
+    });
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(60, 48, 32), skyMat);
     scene.add(sky);
 
     // --- Parallax particle shell (gold/cyan glow points) --------------------
@@ -351,6 +403,9 @@ export function Skybox360() {
       (nameMat.uniforms.uMouse!.value as THREE.Vector2).set(mouse.x, mouse.y);
       ptsMat.uniforms.uTime!.value = time;
       ptsMat.uniforms.uVel!.value = velocity;
+      skyMat.uniforms.uTime!.value = time;
+      skyMat.uniforms.uVel!.value = velocity;
+      skyMat.uniforms.uProg!.value = tSmooth;
 
       renderer.render(scene, camera);
       if (running) raf = requestAnimationFrame(frame);
