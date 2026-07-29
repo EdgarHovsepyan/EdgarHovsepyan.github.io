@@ -98,6 +98,7 @@ const POINTS_VERT = /* glsl */ `
   attribute float aPhase;
   uniform float uTime;
   uniform float uPixelRatio;
+  uniform float uVel; // scroll energy 0..1 — particles swell and glow with motion
   varying float vHue;
   varying float vTwinkle;
   void main() {
@@ -105,8 +106,8 @@ const POINTS_VERT = /* glsl */ `
     vec3 p = position;
     p.y += sin(uTime * 0.35 + aPhase) * 0.6;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    vTwinkle = 0.65 + 0.35 * sin(uTime * (1.2 + aPhase * 0.1) + aPhase * 7.0);
-    gl_PointSize = aSize * uPixelRatio * (26.0 / -mv.z);
+    vTwinkle = (0.65 + 0.35 * sin(uTime * (1.2 + aPhase * 0.1) + aPhase * 7.0)) * (1.0 + uVel * 0.6);
+    gl_PointSize = aSize * uPixelRatio * (26.0 / -mv.z) * (1.0 + uVel * 0.9);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -231,7 +232,7 @@ export function Skybox360() {
     const ptsMat = new THREE.ShaderMaterial({
       vertexShader: POINTS_VERT,
       fragmentShader: POINTS_FRAG,
-      uniforms: { uTime: { value: 0 }, uPixelRatio: { value: dpr } },
+      uniforms: { uTime: { value: 0 }, uPixelRatio: { value: dpr }, uVel: { value: 0 } },
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -273,6 +274,7 @@ export function Skybox360() {
     let t = 0; // section progress 0..1
     let tSmooth = 0;
     let velocity = 0;
+    let roll = 0; // signed, velocity-driven camera bank — cinematic weight
     let yaw = -0.55;
     let pitch = 0;
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -310,14 +312,17 @@ export function Skybox360() {
       const time = clock.getElapsedTime();
       const tPrev = tSmooth;
       tSmooth += (t - tSmooth) * 0.09;
-      velocity += (Math.min(1, Math.abs(tSmooth - tPrev) * 34) - velocity) * 0.12;
+      const dv = (tSmooth - tPrev) * 34; // signed scroll velocity
+      velocity += (Math.min(1, Math.abs(dv)) - velocity) * 0.12;
+      // Bank into the motion like a drone turning — signed roll, heavily damped.
+      roll += (Math.max(-1, Math.min(1, dv)) * 0.05 - roll) * 0.07;
 
       // damped cinematic pan: ~205° sweep with a gentle pitch arc
       const targetYaw = -0.55 + tSmooth * 3.6 + mouse.x * 0.09;
       const targetPitch = Math.sin(tSmooth * Math.PI) * 0.14 - 0.02 + mouse.y * 0.06;
       yaw += (targetYaw - yaw) * 0.06;
       pitch += (targetPitch - pitch) * 0.06;
-      camera.rotation.set(pitch, -yaw, 0, 'YXZ');
+      camera.rotation.set(pitch, -yaw, roll, 'YXZ');
 
       mouse.x += (mouse.tx - mouse.x) * 0.05;
       mouse.y += (mouse.ty - mouse.y) * 0.05;
@@ -335,6 +340,7 @@ export function Skybox360() {
       nameMat.uniforms.uVelocity!.value = velocity;
       (nameMat.uniforms.uMouse!.value as THREE.Vector2).set(mouse.x, mouse.y);
       ptsMat.uniforms.uTime!.value = time;
+      ptsMat.uniforms.uVel!.value = velocity;
 
       renderer.render(scene, camera);
       if (running) raf = requestAnimationFrame(frame);
