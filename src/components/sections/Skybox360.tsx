@@ -112,6 +112,47 @@ const POINTS_VERT = /* glsl */ `
   }
 `;
 
+// Click-burst: a pre-allocated pool of coin-sparks (zero per-frame allocation,
+// zero attribute uploads — the burst is entirely uniform-driven). Fired along
+// the camera ray on click; ballistic arc with gravity, shrink + fade over life.
+const BURST_VERT = /* glsl */ `
+  attribute vec3 aDir;
+  attribute float aSpeed;
+  attribute float aHue;
+  attribute float aSize;
+  uniform float uBTime;   // seconds since the burst fired
+  uniform vec3 uBOrigin;  // burst origin (world space)
+  uniform float uPixelRatio;
+  varying float vHue;
+  varying float vLife;
+  void main() {
+    vHue = aHue;
+    float life = clamp(uBTime / 1.1, 0.0, 1.0);
+    vLife = 1.0 - life;
+    float ease = 1.0 - pow(1.0 - life, 2.2);   // explosive start, damped tail
+    vec3 p = uBOrigin + aDir * (aSpeed * ease * 4.6);
+    p.y -= life * life * 2.4;                   // gravity pulls the sparks down
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    gl_PointSize = aSize * uPixelRatio * (30.0 / -mv.z) * (0.35 + vLife);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+const BURST_FRAG = /* glsl */ `
+  varying float vHue;
+  varying float vLife;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float glow = smoothstep(0.5, 0.0, length(c));
+    glow *= glow;
+    vec3 gold = vec3(1.0, 0.78, 0.28);
+    vec3 cyan = vec3(0.25, 0.85, 1.0);
+    vec3 col = mix(gold, cyan, step(0.72, vHue));
+    float a = glow * vLife;
+    gl_FragColor = vec4(col * glow * (0.6 + vLife), a);
+  }
+`;
+
 const SKY_VERT = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -128,6 +169,8 @@ const SKY_FRAG = /* glsl */ `
   uniform float uTime;
   uniform float uVel;   // scroll energy 0..1
   uniform float uProg;  // journey progress 0..1
+  uniform vec2 uRes;    // drawing-buffer size (device px)
+  uniform vec2 uMouse;  // cursor, 0..1 bottom-up
   varying vec2 vUv;
   vec3 hueShift(vec3 c, float a) {
     const vec3 k = vec3(0.57735);
@@ -150,6 +193,12 @@ const SKY_FRAG = /* glsl */ `
     col = hueShift(col, sin(uProg * 6.28318) * 0.30 + uTime * 0.02 + uVel * 0.45);
     // Breathing exposure — the slow inhale/exhale that makes it feel alive.
     col *= 1.0 + 0.05 * sin(uTime * 0.55) + uVel * 0.22;
+    // Torch — a soft warm glow follows the cursor across the panorama (the
+    // "aim" cue of the scene's little game loop).
+    float aspect = uRes.x / max(uRes.y, 1.0);
+    vec2 sc = gl_FragCoord.xy / uRes;
+    vec2 d = vec2((sc.x - uMouse.x) * aspect, sc.y - uMouse.y);
+    col += vec3(1.0, 0.82, 0.45) * exp(-dot(d, d) * 9.0) * 0.13;
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -252,6 +301,8 @@ export function Skybox360() {
         uTime: { value: 0 },
         uVel: { value: 0 },
         uProg: { value: 0 },
+        uRes: { value: new THREE.Vector2(host.clientWidth * dpr, host.clientHeight * dpr) },
+        uMouse: { value: new THREE.Vector2(0.5, 0.55) },
       },
       side: THREE.BackSide,
       depthWrite: false,
@@ -291,6 +342,70 @@ export function Skybox360() {
     });
     const points = new THREE.Points(ptsGeo, ptsMat);
     scene.add(points);
+
+    // --- Click-burst pool (the "act" of the scene's game loop) --------------
+    // 90 coin-sparks pre-allocated once; firing a burst touches two uniforms
+    // and a visibility flag — no allocation, no attribute upload, ever.
+    const B_COUNT = 90;
+    const bPos = new Float32Array(B_COUNT * 3); // unused, required by Points
+    const bDir = new Float32Array(B_COUNT * 3);
+    const bSpeed = new Float32Array(B_COUNT);
+    const bHue = new Float32Array(B_COUNT);
+    const bSize = new Float32Array(B_COUNT);
+    for (let i = 0; i < B_COUNT; i++) {
+      // random unit sphere, biased slightly upward like a chip toss
+      const u = Math.random() * 2 - 1;
+      const th = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(1 - u * u);
+      bDir[i * 3] = r * Math.cos(th);
+      bDir[i * 3 + 1] = u * 0.85 + 0.35;
+      bDir[i * 3 + 2] = r * Math.sin(th);
+      bSpeed[i] = 0.5 + Math.random() * 0.9;
+      bHue[i] = Math.random();
+      bSize[i] = 1.6 + Math.random() * 2.6;
+    }
+    const burstGeo = new THREE.BufferGeometry();
+    burstGeo.setAttribute('position', new THREE.BufferAttribute(bPos, 3));
+    burstGeo.setAttribute('aDir', new THREE.BufferAttribute(bDir, 3));
+    burstGeo.setAttribute('aSpeed', new THREE.BufferAttribute(bSpeed, 1));
+    burstGeo.setAttribute('aHue', new THREE.BufferAttribute(bHue, 1));
+    burstGeo.setAttribute('aSize', new THREE.BufferAttribute(bSize, 1));
+    const burstMat = new THREE.ShaderMaterial({
+      vertexShader: BURST_VERT,
+      fragmentShader: BURST_FRAG,
+      uniforms: {
+        uBTime: { value: 0 },
+        uBOrigin: { value: new THREE.Vector3() },
+        uPixelRatio: { value: dpr },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const burst = new THREE.Points(burstGeo, burstMat);
+    burst.visible = false;
+    burst.frustumCulled = false;
+    scene.add(burst);
+
+    let bTime = -1; // <0 = idle
+    let clickKick = 0; // impact energy fed into the sky/particles on click
+    const raycaster = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const fireBurst = (clientX: number, clientY: number) => {
+      ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+      raycaster.setFromCamera(ndc, camera);
+      (burstMat.uniforms.uBOrigin!.value as THREE.Vector3)
+        .copy(raycaster.ray.direction)
+        .multiplyScalar(9);
+      bTime = 0;
+      burst.visible = true;
+      clickKick = 1;
+    };
+    const onStageClick = (e: MouseEvent) => {
+      if (!inView) return;
+      fireBurst(e.clientX, e.clientY);
+    };
+    rootEl.addEventListener('click', onStageClick);
 
     // --- The name: camera-attached plane with dissolve/aberration/wave ------
     const nameTex = makeNameTexture(THREE);
@@ -351,6 +466,7 @@ export function Skybox360() {
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      (skyMat.uniforms.uRes!.value as THREE.Vector2).set(w * dpr, h * dpr);
     };
     window.addEventListener('resize', onResize);
 
@@ -358,6 +474,7 @@ export function Skybox360() {
     let raf = 0;
     let running = false;
     let inView = false;
+    let prevTime = 0;
     const clock = new THREE.Clock();
 
     const frame = () => {
@@ -376,10 +493,30 @@ export function Skybox360() {
       pitch += (targetPitch - pitch) * 0.06;
       camera.rotation.set(pitch, -yaw, roll, 'YXZ');
 
-      // The "boom": scroll velocity punches the FOV like a dolly-zoom — the
-      // world bursts wider under fast scrolling and breathes back at rest — and
-      // the panorama itself gets dragged slightly by the motion.
-      const targetFov = 72 + velocity * 10;
+      // Game-loop energy: scroll velocity + click impact + the end-of-journey
+      // "win ceremony" (a pulsing gold surge as the 205° pan completes) all
+      // feed one scalar that every effect listens to.
+      const dt2 = Math.min(Math.max(time - prevTime, 0), 0.05);
+      prevTime = time;
+      clickKick *= 0.9;
+      const award =
+        THREE.MathUtils.smoothstep(tSmooth, 0.86, 0.985) * (0.55 + 0.45 * Math.sin(time * 2.4));
+      const energy = Math.min(1, velocity + clickKick * 0.75 + Math.max(0, award) * 0.6);
+
+      // Burst lifecycle — pure uniform advance; hides itself when spent.
+      if (bTime >= 0) {
+        bTime += dt2;
+        burstMat.uniforms.uBTime!.value = bTime;
+        if (bTime > 1.15) {
+          bTime = -1;
+          burst.visible = false;
+        }
+      }
+
+      // The "boom": energy punches the FOV like a dolly-zoom — the world bursts
+      // wider under fast scrolling, clicks and the ceremony — and the panorama
+      // itself gets dragged slightly by the motion.
+      const targetFov = 72 + energy * 10;
       if (Math.abs(camera.fov - targetFov) > 0.03) {
         camera.fov += (targetFov - camera.fov) * 0.1;
         camera.updateProjectionMatrix();
@@ -402,10 +539,14 @@ export function Skybox360() {
       nameMat.uniforms.uVelocity!.value = velocity;
       (nameMat.uniforms.uMouse!.value as THREE.Vector2).set(mouse.x, mouse.y);
       ptsMat.uniforms.uTime!.value = time;
-      ptsMat.uniforms.uVel!.value = velocity;
+      ptsMat.uniforms.uVel!.value = energy;
       skyMat.uniforms.uTime!.value = time;
-      skyMat.uniforms.uVel!.value = velocity;
+      skyMat.uniforms.uVel!.value = energy;
       skyMat.uniforms.uProg!.value = tSmooth;
+      (skyMat.uniforms.uMouse!.value as THREE.Vector2).set(
+        mouse.x * 0.5 + 0.5,
+        0.5 - mouse.y * 0.5,
+      );
 
       renderer.render(scene, camera);
       if (running) raf = requestAnimationFrame(frame);
@@ -452,6 +593,9 @@ export function Skybox360() {
         window.removeEventListener('scroll', onScroll);
         window.removeEventListener('pointermove', onMouse);
         window.removeEventListener('resize', onResize);
+        rootEl.removeEventListener('click', onStageClick);
+        burstGeo.dispose();
+        burstMat.dispose();
         ptsGeo.dispose();
         ptsMat.dispose();
         nameMat.dispose();
@@ -493,7 +637,7 @@ export function Skybox360() {
           <span className={styles.fallbackRole}>Senior Game Developer</span>
         </div>
         <div className={styles.hint} aria-hidden="true">
-          360° · keep scrolling
+          360° · scroll · tap for sparks
         </div>
       </div>
     </section>
