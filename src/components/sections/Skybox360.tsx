@@ -171,6 +171,7 @@ const SKY_FRAG = /* glsl */ `
   uniform float uProg;  // journey progress 0..1
   uniform vec2 uRes;    // drawing-buffer size (device px)
   uniform vec2 uMouse;  // cursor, 0..1 bottom-up
+  uniform vec3 uClick;  // xy = tap point (0..1 bottom-up), z = seconds since tap
   varying vec2 vUv;
   vec3 hueShift(vec3 c, float a) {
     const vec3 k = vec3(0.57735);
@@ -178,25 +179,57 @@ const SKY_FRAG = /* glsl */ `
     return c * ca + cross(k, c) * sa + k * dot(k, c) * (1.0 - ca);
   }
   void main() {
+    float aspect = uRes.x / max(uRes.y, 1.0);
+    vec2 sc = gl_FragCoord.xy / uRes;
     vec2 uv = vUv;
+
+    // Tap shockwave — a ring of refraction expands from the click point,
+    // bending the panorama itself before it fades.
+    vec2 cd = vec2((sc.x - uClick.x) * aspect, sc.y - uClick.y);
+    float cr = length(cd);
+    float front = cr - uClick.z * 0.75;
+    float ring = exp(-front * front * 260.0) * exp(-uClick.z * 1.9);
+    uv += (cd / max(cr, 1e-4)) * ring * 0.012;
+
     // Liquid melt — a faint heat-haze at rest that liquefies under scroll.
     float melt = 0.0014 + uVel * 0.006;
     uv.x += sin(uv.y * 28.0 + uTime * 0.5) * melt;
     uv.y += cos(uv.x * 22.0 - uTime * 0.4) * melt;
-    // Dream-split — motion separates the color channels like altered vision.
-    float split = 0.0007 + uVel * 0.0045;
+    // Dream-split — motion (and the shock ring) separates the color channels.
+    float split = 0.0007 + uVel * 0.0045 + ring * 0.004;
     vec3 col;
     col.r = texture2D(uMap, uv + vec2(split, 0.0)).r;
     col.g = texture2D(uMap, uv).g;
     col.b = texture2D(uMap, uv - vec2(split, 0.0)).b;
     // Hue-cycle — the spectrum drifts with the journey and surges with speed.
     col = hueShift(col, sin(uProg * 6.28318) * 0.30 + uTime * 0.02 + uVel * 0.45);
+
+    // Comet — a living gold light endlessly orbiting the room, tail fading
+    // behind it (equirect space, so it truly circles the panorama).
+    float cx = fract(uTime * 0.022);
+    float cy = 0.44 + 0.07 * sin(uTime * 0.31);
+    float dxw = fract(vUv.x - cx + 0.5) - 0.5;
+    float dyw = vUv.y - cy;
+    float head = exp(-(dxw * dxw * 26000.0 + dyw * dyw * 30000.0));
+    float tail = exp(dxw * 60.0) * step(dxw, 0.0) * step(-0.14, dxw) * exp(-dyw * dyw * 22000.0);
+    col += vec3(1.0, 0.85, 0.5) * (head * 1.4 + tail * 0.4);
+
+    // Anamorphic flare — bright pixels smear a gold horizontal lens streak.
+    float lum = dot(col, vec3(0.299, 0.587, 0.114));
+    col += vec3(1.0, 0.8, 0.45) * pow(lum, 4.0) * exp(-pow((sc.y - 0.52) * 6.0, 2.0)) * 0.30;
+
+    // Warp speed-lines — radial dashes rush in only at high scroll energy.
+    vec2 rc = vec2(sc.x * aspect - 0.5 * aspect, sc.y - 0.5);
+    float ang = atan(rc.y, rc.x);
+    float dashes = smoothstep(0.93, 1.0, sin(ang * 26.0 + uTime * 2.6));
+    col += vec3(0.75, 0.85, 1.0) * dashes * smoothstep(0.18, 0.6, length(rc)) * uVel * uVel * 0.5;
+
+    // Shock ring glow — the wavefront itself glows gold.
+    col += vec3(1.0, 0.82, 0.4) * ring * 0.55;
+
     // Breathing exposure — the slow inhale/exhale that makes it feel alive.
     col *= 1.0 + 0.05 * sin(uTime * 0.55) + uVel * 0.22;
-    // Torch — a soft warm glow follows the cursor across the panorama (the
-    // "aim" cue of the scene's little game loop).
-    float aspect = uRes.x / max(uRes.y, 1.0);
-    vec2 sc = gl_FragCoord.xy / uRes;
+    // Torch — a soft warm glow follows the cursor (the "aim" cue).
     vec2 d = vec2((sc.x - uMouse.x) * aspect, sc.y - uMouse.y);
     col += vec3(1.0, 0.82, 0.45) * exp(-dot(d, d) * 9.0) * 0.13;
     gl_FragColor = vec4(col, 1.0);
@@ -242,6 +275,9 @@ export function Skybox360() {
   const root = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const canvasHost = useRef<HTMLDivElement>(null);
+  const cineTop = useRef<HTMLDivElement>(null);
+  const cineBot = useRef<HTMLDivElement>(null);
+  const cineProg = useRef<HTMLDivElement>(null);
   // Phones skip the WebGL scene; show the real panorama art with a Ken-Burns pan
   // instead (loaded only on mobile so desktop never fetches the mobile texture).
   const [showPoster, setShowPoster] = useState(false);
@@ -303,6 +339,7 @@ export function Skybox360() {
         uProg: { value: 0 },
         uRes: { value: new THREE.Vector2(host.clientWidth * dpr, host.clientHeight * dpr) },
         uMouse: { value: new THREE.Vector2(0.5, 0.55) },
+        uClick: { value: new THREE.Vector3(0.5, 0.5, 9) },
       },
       side: THREE.BackSide,
       depthWrite: false,
@@ -400,6 +437,12 @@ export function Skybox360() {
       bTime = 0;
       burst.visible = true;
       clickKick = 1;
+      // Shockwave origin (screen space, bottom-up) — the ring starts here.
+      (skyMat.uniforms.uClick!.value as THREE.Vector3).set(
+        clientX / window.innerWidth,
+        1 - clientY / window.innerHeight,
+        0,
+      );
     };
     const onStageClick = (e: MouseEvent) => {
       if (!inView) return;
@@ -547,6 +590,17 @@ export function Skybox360() {
         mouse.x * 0.5 + 0.5,
         0.5 - mouse.y * 0.5,
       );
+      const ck = skyMat.uniforms.uClick!.value as THREE.Vector3;
+      if (ck.z < 3) ck.z += dt2;
+
+      // Cinematic letterbox — bars ease in while the scene owns the viewport;
+      // the bottom bar carries the journey-progress line. Transform-only.
+      const bars =
+        THREE.MathUtils.smoothstep(tSmooth, 0.0, 0.08) *
+        (1 - THREE.MathUtils.smoothstep(tSmooth, 0.92, 1.0));
+      if (cineTop.current) cineTop.current.style.transform = `scaleY(${bars.toFixed(3)})`;
+      if (cineBot.current) cineBot.current.style.transform = `scaleY(${bars.toFixed(3)})`;
+      if (cineProg.current) cineProg.current.style.transform = `scaleX(${tSmooth.toFixed(4)})`;
 
       renderer.render(scene, camera);
       if (running) raf = requestAnimationFrame(frame);
@@ -635,6 +689,10 @@ export function Skybox360() {
         <div className={styles.fallback} aria-hidden="true">
           <span className={styles.fallbackName}>Edgar Hovsepyan</span>
           <span className={styles.fallbackRole}>Senior Game Developer</span>
+        </div>
+        <div ref={cineTop} className={`${styles.cine} ${styles.cineTop}`} aria-hidden="true" />
+        <div ref={cineBot} className={`${styles.cine} ${styles.cineBot}`} aria-hidden="true">
+          <div ref={cineProg} className={styles.cineProg} />
         </div>
         <div className={styles.hint} aria-hidden="true">
           360° · scroll · tap for sparks
