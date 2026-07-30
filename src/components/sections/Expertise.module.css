@@ -3,7 +3,8 @@
   z-index: 2;
   max-width: var(--shell);
   margin: 0 auto;
-  padding: 0 var(--gutter) clamp(80px, 12vw, 140px);
+  /* Top padding so THE STACK doesn't sit flush on the 360° scene's seam. */
+  padding: clamp(70px, 10vw, 120px) var(--gutter) clamp(80px, 12vw, 140px);
 }
 
 .header {

@@ -10,6 +10,9 @@ export interface Game {
   featured?: boolean;
   /** Award ribbon for the card (e.g. the SBC shortlist). */
   award?: string;
+  /** Case-study cards (no public demo): watermark glyph + falling-symbol rain. */
+  glyph?: string;
+  rain?: string[];
 }
 
 // Official Pascal Gaming fun-mode (demo) launcher. Hitting this endpoint
@@ -28,6 +31,8 @@ export const games: Game[] = [
     name: 'Non-Stop Roulette',
     type: 'Live Roulette',
     craft: 'Co-developed with the game team: 3D wheel integration and continuous live rounds.',
+    glyph: '◎',
+    rain: ['●', '7', '19', '32', '◆'],
     award: 'SBC Awards Americas 2025 · GotY Shortlist',
     featured: true,
   },
@@ -35,11 +40,15 @@ export const games: Game[] = [
     name: '3D Roulette',
     type: '3D Table',
     craft: 'GLB wheel meshes optimized in Blender; deterministic ball physics on server outcomes.',
+    glyph: '◉',
+    rain: ['0', '32', '15', '●', '◆'],
   },
   {
     name: 'Non-Stop Blackjack',
     type: 'Blackjack',
     craft: 'Continuous-deal table flow, side-bet math and card-deal win ceremonies.',
+    glyph: '♠',
+    rain: ['♠', '♥', '♦', '♣'],
   },
 
   // --- Playable fun-mode demos ---------------------------------------------
