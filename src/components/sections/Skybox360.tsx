@@ -196,13 +196,14 @@ const SKY_FRAG = /* glsl */ `
     uv.x += sin(uv.y * 28.0 + uTime * 0.5) * melt;
     uv.y += cos(uv.x * 22.0 - uTime * 0.4) * melt;
     // Dream-split — motion (and the shock ring) separates the color channels.
-    float split = 0.0007 + uVel * 0.0045 + ring * 0.004;
+    float split = 0.0006 + uVel * 0.0034 + ring * 0.004;
     vec3 col;
     col.r = texture2D(uMap, uv + vec2(split, 0.0)).r;
     col.g = texture2D(uMap, uv).g;
     col.b = texture2D(uMap, uv - vec2(split, 0.0)).b;
     // Hue-cycle — the spectrum drifts with the journey and surges with speed.
-    col = hueShift(col, sin(uProg * 6.28318) * 0.30 + uTime * 0.02 + uVel * 0.45);
+    // Restrained grade: a gentle spectral drift, never a rainbow.
+    col = hueShift(col, sin(uProg * 6.28318) * 0.16 + uTime * 0.015 + uVel * 0.24);
 
     // Comet — a living gold light endlessly orbiting the room, tail fading
     // behind it (equirect space, so it truly circles the panorama).
@@ -216,7 +217,7 @@ const SKY_FRAG = /* glsl */ `
 
     // Anamorphic flare — bright pixels smear a gold horizontal lens streak.
     float lum = dot(col, vec3(0.299, 0.587, 0.114));
-    col += vec3(1.0, 0.8, 0.45) * pow(lum, 4.0) * exp(-pow((sc.y - 0.52) * 6.0, 2.0)) * 0.30;
+    col += vec3(1.0, 0.8, 0.45) * pow(lum, 4.0) * exp(-pow((sc.y - 0.52) * 6.0, 2.0)) * 0.20;
 
     // Warp speed-lines — radial dashes rush in only at high scroll energy.
     vec2 rc = vec2(sc.x * aspect - 0.5 * aspect, sc.y - 0.5);
