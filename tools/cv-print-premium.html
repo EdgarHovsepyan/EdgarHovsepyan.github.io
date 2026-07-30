@@ -26,7 +26,7 @@
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
   a{ color:var(--accent); text-decoration:none; }
-  .page{ position:relative; width:210mm; min-height:297mm; padding:8mm 11mm; overflow:hidden; }
+  .page{ position:relative; width:210mm; height:297mm; padding:7mm 10mm; overflow:hidden; }
   .glow{ position:absolute; top:-160px; right:-120px; width:500px; height:500px; border-radius:50%;
     background:radial-gradient(circle,rgba(77,124,255,.16),transparent 62%); pointer-events:none; }
   .glow2{ position:absolute; bottom:-220px; left:-160px; width:560px; height:560px; border-radius:50%;
@@ -60,7 +60,7 @@
   .award .v{ font-family:var(--disp); font-weight:700; font-size:8.8pt; color:#f1e4c8; margin-top:2px; line-height:1.12; }
   .award .s{ font-size:7pt; color:var(--muted); margin-top:2px; line-height:1.25; }
 
-  .stats{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:6px; }
+  .stats{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:5px; }
   .stat{ border:1px solid var(--line); border-radius:10px; padding:4px 8px; background:var(--panel); }
   .stat .n{ font-family:var(--disp); font-weight:800; font-size:11pt; line-height:1; letter-spacing:-.01em; }
   .stat.gold .n{ color:var(--gold); }
@@ -70,7 +70,7 @@
   h2{ font-family:var(--mono); font-size:7.5pt; font-weight:700; letter-spacing:.15em; text-transform:uppercase;
     color:var(--accent); display:flex; align-items:center; gap:8px; margin:0 0 7px; }
   h2::after{ content:""; flex:1; height:1px; background:var(--line); }
-  .block{ margin-bottom:9px; }
+  .block{ margin-bottom:7px; }
 
   .role-item{ margin-bottom:5px; }
   .ri-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
@@ -96,7 +96,7 @@
   .kv .row a{ color:#cdd8ff; }
   .stackgrp{ margin-bottom:5px; }
   .stackgrp .gl{ font-family:var(--mono); font-size:6.3pt; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); margin-bottom:4px; }
-  .lang .row{ display:flex; justify-content:space-between; font-size:8pt; margin:2.5px 0; color:#dcdce2; }
+  .lang .row{ display:flex; justify-content:space-between; font-size:8pt; margin:2px 0; color:#dcdce2; }
   .lang .row span:last-child{ font-family:var(--mono); font-size:7pt; color:var(--muted); }
   .edu li{ font-size:7.7pt; color:#cfcfd6; line-height:1.3; }
   .edu li b{ color:#fff; }
