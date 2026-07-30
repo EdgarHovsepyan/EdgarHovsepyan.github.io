@@ -204,3 +204,57 @@
     min-height: 210px;
   }
 }
+
+/* Case-study card art: a big rotated game glyph watermark plus a slow rain of
+   per-game symbols (roulette numbers, card suits). Transform-only animation. */
+.glyph {
+  position: absolute;
+  right: -3%;
+  bottom: -12%;
+  font-size: 180px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.055);
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+.rain {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.rain i {
+  position: absolute;
+  top: -15%;
+  font-style: normal;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.15);
+  animation: symRain 9s linear infinite;
+  will-change: transform;
+}
+
+.rain i:nth-child(1) { left: 8%;  animation-delay: 0s;    animation-duration: 8s; }
+.rain i:nth-child(2) { left: 24%; animation-delay: -3.2s; animation-duration: 10s; font-size: 12px; }
+.rain i:nth-child(3) { left: 41%; animation-delay: -6.1s; animation-duration: 9s;  color: rgba(229, 192, 123, 0.22); }
+.rain i:nth-child(4) { left: 57%; animation-delay: -1.4s; animation-duration: 11s; font-size: 18px; }
+.rain i:nth-child(5) { left: 70%; animation-delay: -4.8s; animation-duration: 8.5s; }
+.rain i:nth-child(6) { left: 82%; animation-delay: -7.4s; animation-duration: 10.5s; font-size: 12px; color: rgba(229, 192, 123, 0.2); }
+.rain i:nth-child(7) { left: 92%; animation-delay: -2.6s; animation-duration: 9.5s; }
+.rain i:nth-child(8) { left: 16%; animation-delay: -8.3s; animation-duration: 12s; font-size: 11px; }
+.rain i:nth-child(9) { left: 49%; animation-delay: -5.5s; animation-duration: 10s; font-size: 13px; }
+.rain i:nth-child(10) { left: 64%; animation-delay: -9.1s; animation-duration: 11.5s; color: rgba(229, 192, 123, 0.18); }
+
+@keyframes symRain {
+  to {
+    transform: translateY(460px) rotate(55deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rain i {
+    animation: none;
+    opacity: 0;
+  }
+}

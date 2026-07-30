@@ -468,6 +468,14 @@ export function Skybox360() {
     });
     const namePlane = new THREE.Mesh(new THREE.PlaneGeometry(7.4, 1.85, 96, 12), nameMat);
     namePlane.position.set(0, 0, -5.4);
+    // Fit the name inside the horizontal frustum — on portrait phones the
+    // 7.4-unit plane is wider than the view and the name crops at the sides.
+    const fitName = () => {
+      const vFov = (72 * Math.PI) / 180;
+      const viewW = 2 * 5.4 * Math.tan(vFov / 2) * camera.aspect;
+      namePlane.scale.setScalar(Math.min(1, (viewW * 0.88) / 7.4));
+    };
+    fitName();
     namePlane.renderOrder = 10;
     camera.add(namePlane);
     scene.add(camera);
@@ -510,6 +518,7 @@ export function Skybox360() {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       (skyMat.uniforms.uRes!.value as THREE.Vector2).set(w * dpr, h * dpr);
+      fitName();
     };
     window.addEventListener('resize', onResize);
 

@@ -18,7 +18,14 @@ function CardInner({ game }: { game: Game }) {
           aria-hidden="true"
         />
       ) : (
-        <div className={styles.artFallback} aria-hidden="true" />
+        <div className={styles.artFallback} aria-hidden="true">
+          <span className={styles.glyph}>{game.glyph ?? '◆'}</span>
+          <span className={styles.rain}>
+            {[...(game.rain ?? ['◆', '●']), ...(game.rain ?? ['◆', '●'])].map((ch, i) => (
+              <i key={i}>{ch}</i>
+            ))}
+          </span>
+        </div>
       )}
       <div className={styles.scrim} aria-hidden="true" />
 

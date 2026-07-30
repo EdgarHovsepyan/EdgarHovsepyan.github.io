@@ -13,7 +13,7 @@ export function Awards() {
           Recognition — 2024 · 2025
         </div>
         <h2 className={styles.title}>Game of the Year</h2>
-        <div className={styles.badge}>✦&nbsp;&nbsp;Shortlisted&nbsp;&nbsp;✦</div>
+        <div className={styles.badge}>Shortlisted</div>
         <div className={styles.detail}>
           Non-Stop Roulette · Pascal Gaming
           <br />
@@ -26,7 +26,7 @@ export function Awards() {
         <div className={styles.divider} aria-hidden="true" />
 
         <div className={styles.second}>
-          <div className={styles.secondBadge}>✦&nbsp;&nbsp;Finalist&nbsp;&nbsp;✦</div>
+          <div className={styles.secondBadge}>Finalist</div>
           <div className={styles.secondTitle}>B.F.T.H. Arena Awards 2024</div>
           <div className={styles.detail}>
             <span className={styles.sub}>Industry recognition · iGaming</span>

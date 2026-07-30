@@ -111,6 +111,7 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--gold);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 .title {
@@ -123,7 +124,9 @@
   line-height: 0.92;
   color: var(--text);
   text-wrap: balance;
-  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.9),
+    0 6px 32px rgba(0, 0, 0, 0.75);
 }
 
 .caption {
@@ -135,6 +138,9 @@
   line-height: 1.2;
   color: var(--text);
   text-wrap: pretty;
+  text-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.9),
+    0 3px 18px rgba(0, 0, 0, 0.7);
 }
 
 .caption strong {
@@ -150,6 +156,9 @@
   line-height: 1.6;
   color: var(--text-secondary);
   text-wrap: pretty;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.95),
+    0 2px 12px rgba(0, 0, 0, 0.8);
 }
 
 .tags {
