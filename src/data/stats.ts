@@ -6,5 +6,6 @@ export const heroStats: Stat[] = [
   { value: '14', suffix: '+', label: 'Game verticals' },
   { value: '50', suffix: '+', label: 'Developers mentored' },
   { value: '2025', label: 'SBC Awards shortlist', tone: 'gold' },
+  { value: '2024', label: 'BFTH Arena finalist', tone: 'gold' },
   { value: '120', label: 'FPS on mid-tier mobile' },
 ];
