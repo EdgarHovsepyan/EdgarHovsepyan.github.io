@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type * as THREE from 'three';
+import { cloneAvatar, loadAvatarModel, loadFlipClip } from '../../lib/avatarAssets';
 import styles from './Skybox360.module.css';
 
 /**
@@ -279,6 +280,9 @@ export function Skybox360() {
   const cineTop = useRef<HTMLDivElement>(null);
   const cineBot = useRef<HTMLDivElement>(null);
   const cineProg = useRef<HTMLDivElement>(null);
+  const psy1 = useRef<HTMLSpanElement>(null);
+  const psy2 = useRef<HTMLSpanElement>(null);
+  const psy3 = useRef<HTMLSpanElement>(null);
   // Phones skip the WebGL scene; show the real panorama art with a Ken-Burns pan
   // instead (loaded only on mobile so desktop never fetches the mobile texture).
   const [showPoster, setShowPoster] = useState(false);
@@ -451,6 +455,43 @@ export function Skybox360() {
     };
     rootEl.addEventListener('click', onStageClick);
 
+    // --- The character: backflip scrubbed by the journey --------------------
+    // Reuses the already-downloaded avatar (shared module cache) and a 137KB
+    // animation-only GLB — the full 5MB model is never fetched twice. He
+    // stands on the panorama floor where the pan crosses mid-journey and the
+    // scroll scrubs his backflip.
+    let flipMixer: THREE.AnimationMixer | undefined;
+    let flipDur = 2.14;
+    let avatarClone: THREE.Group | undefined;
+    void (async () => {
+      try {
+        const [gltf, clip] = await Promise.all([loadAvatarModel(), loadFlipClip()]);
+        if (disposed || !clip) return;
+        const av = await cloneAvatar(gltf.scene);
+        if (disposed) return;
+        // The sky/name/points are shader-lit; these lights exist only for him.
+        const hemi = new THREE.HemisphereLight(0x8fa8ff, 0x1a1206, 1.35);
+        const key = new THREE.DirectionalLight(0xffe2b0, 2.1);
+        key.position.set(3, 4, 2);
+        scene.add(hemi, key);
+        av.traverse((o) => {
+          if ((o as THREE.SkinnedMesh).isSkinnedMesh) o.frustumCulled = false;
+        });
+        // Where the camera looks at mid-journey (yaw ≈ 1.25 rad), facing us.
+        av.position.set(3.4, -1.62, -1.13);
+        av.rotation.y = Math.atan2(-av.position.x, -av.position.z);
+        scene.add(av);
+        flipDur = clip.duration - 0.02;
+        flipMixer = new THREE.AnimationMixer(av);
+        flipMixer.clipAction(clip).play();
+        flipMixer.setTime(0);
+        avatarClone = av;
+        rootEl.dataset.flip = 'on';
+      } catch {
+        /* the panorama works without him */
+      }
+    })();
+
     // --- The name: camera-attached plane with dissolve/aberration/wave ------
     const nameTex = makeNameTexture(THREE);
     const nameMat = new THREE.ShaderMaterial({
@@ -582,6 +623,25 @@ export function Skybox360() {
       // particles: rotate faster than the camera for depth
       points.rotation.y = yaw * 0.35 + time * 0.01;
 
+      // The backflip: scrubbed over the 25–75% window of the pan, so he
+      // launches as the camera finds him and sticks the landing as it leaves.
+      if (flipMixer) {
+        const ft = Math.min(1, Math.max(0, (tSmooth - 0.25) / 0.5));
+        flipMixer.setTime(ft * flipDur);
+      }
+
+      // Psychology captions — one thought per act of the flip.
+      const psyWin = (el: HTMLElement | null, a: number, b: number) => {
+        if (!el) return;
+        const o =
+          THREE.MathUtils.smoothstep(tSmooth, a, a + 0.06) *
+          (1 - THREE.MathUtils.smoothstep(tSmooth, b - 0.06, b));
+        el.style.opacity = o.toFixed(3);
+      };
+      psyWin(psy1.current, 0.16, 0.4);
+      psyWin(psy2.current, 0.43, 0.66);
+      psyWin(psy3.current, 0.69, 0.9);
+
       // name: materialize 6–38%, hold, dissolve 72–96%
       const inRamp = THREE.MathUtils.smoothstep(tSmooth, 0.06, 0.38);
       const outRamp = 1 - THREE.MathUtils.smoothstep(tSmooth, 0.72, 0.96);
@@ -660,6 +720,14 @@ export function Skybox360() {
         rootEl.removeEventListener('click', onStageClick);
         burstGeo.dispose();
         burstMat.dispose();
+        // Clone materials are per-scene; geometry/textures stay in the cache.
+        avatarClone?.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (m.isMesh) {
+            const mats = Array.isArray(m.material) ? m.material : [m.material];
+            mats.forEach((mat) => mat.dispose());
+          }
+        });
         ptsGeo.dispose();
         ptsMat.dispose();
         nameMat.dispose();
@@ -703,6 +771,11 @@ export function Skybox360() {
         <div ref={cineTop} className={`${styles.cine} ${styles.cineTop}`} aria-hidden="true" />
         <div ref={cineBot} className={`${styles.cine} ${styles.cineBot}`} aria-hidden="true">
           <div ref={cineProg} className={styles.cineProg} />
+        </div>
+        <div className={styles.psy} aria-hidden="true">
+          <span ref={psy1}>fear is just a frame — flip it</span>
+          <span ref={psy2}>commit mid-air · trust the craft</span>
+          <span ref={psy3}>land where you look</span>
         </div>
         <div className={styles.hint} aria-hidden="true">
           360° · scroll · tap for sparks
