@@ -42,6 +42,7 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
         <div className={styles.portal} />
       </div>
       <div className={styles.sheen} aria-hidden="true" />
+      <div className={styles.sig} aria-hidden="true" />
 
       <div className={styles.panelInner}>
         <div className={styles.panelTop}>

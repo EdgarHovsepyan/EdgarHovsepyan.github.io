@@ -207,6 +207,14 @@
 
 /* Case-study card art: a big rotated game glyph watermark plus a slow rain of
    per-game symbols (roulette numbers, card suits). Transform-only animation. */
+.glyph::before {
+  content: attr(data-ch);
+}
+
+.rain i::before {
+  content: attr(data-ch);
+}
+
 .glyph {
   position: absolute;
   right: -3%;
