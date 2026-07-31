@@ -186,3 +186,39 @@
     display: none;
   }
 }
+
+/* Psychology captions — one thought per act of the backflip, crossfaded by
+   scroll in the render loop (opacity only, no layout). */
+.psy {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(88px, 16vh, 170px);
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(86vw, 640px);
+  pointer-events: none;
+  text-align: center;
+}
+
+.psy span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(17px, 2.4vw, 27px);
+  letter-spacing: 0.04em;
+  color: rgba(244, 244, 245, 0.92);
+  text-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.95),
+    0 6px 28px rgba(0, 0, 0, 0.7);
+  will-change: opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .psy {
+    display: none;
+  }
+}

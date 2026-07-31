@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type * as THREE from 'three';
+import { cloneAvatar, loadAvatarModel } from '../../lib/avatarAssets';
 import styles from './AvatarLanding.module.css';
 
 /**
@@ -12,9 +13,13 @@ import styles from './AvatarLanding.module.css';
  *   airborne at 2.52m → first touch t≈0.60s → deepest crouch t≈0.633s →
  *   hero-pose settle to 2.0s. Character height 1.85m, origin at feet.
  *
- * Scroll mapping: the fall owns ~65% of the scroll travel, the settle the
- * rest; crossing the real impact frame fires the payoff — ground shock ring,
- * gold spark burst, camera shake and (desktop) a bloom spike.
+ * Scroll choreography (four beats over the sticky travel):
+ *   1. the fall + superhero landing (clip scrub; impact fires shock ring,
+ *      gold burst, camera shake, bloom spike)
+ *   2. hero settle
+ *   3. camera push-in on the head — the glasses frames pulse emissive
+ *   4. final wide zoom-out while the model dissolves into surface-sampled
+ *      particle dots that rain down to the ground.
  *
  * Performance contract: everything (three, GLTFLoader, post) lazy-loads when
  * the section approaches; render loop is in-view + tab-visibility gated; DPR
@@ -24,6 +29,9 @@ import styles from './AvatarLanding.module.css';
 
 const IMPACT_TIME = 0.62; // s — first ground contact in the clip
 const CLIP_END = 1.98;
+// Overall scroll phases: landing → head close-up (the frames) → dissolve+rain.
+const PHASE_CLIP = 0.6; // scroll fraction owned by the landing animation
+const PHASE_CLOSE = 0.78; // close-up fully framed here; dissolve starts after
 
 const GROUND_FRAG = /* glsl */ `
   uniform float uImpact; // 1 at impact, decays to 0
@@ -99,11 +107,47 @@ const BURST_FRAG = /* glsl */ `
   }
 `;
 
+const DOTS_VERT = /* glsl */ `
+  attribute float aSeed;
+  uniform float uDissolve; // 0 = solid model, 1 = fully rained away
+  uniform float uTime;
+  uniform float uPixelRatio;
+  varying float vA;
+  varying vec3 vCol;
+  void main() {
+    vec3 p = position;
+    // Head releases first, feet last; every dot staggered by its own seed.
+    float head = clamp(position.y / 1.85, 0.0, 1.0);
+    float form = clamp(uDissolve * 1.6 - (1.0 - head) * 0.35 - aSeed * 0.2, 0.0, 1.0);
+    // brief shimmer off the surface, then rain straight down
+    p.x += sin(uTime * (1.0 + aSeed * 2.0) + aSeed * 43.0) * form * 0.07;
+    p.z += cos(uTime * (1.3 + aSeed) + aSeed * 17.0) * form * 0.07;
+    float fall = pow(max(form - 0.22, 0.0) / 0.78, 1.6) * (2.8 + aSeed * 1.6);
+    p.y = max(p.y - fall, 0.015);
+    vA = smoothstep(0.0, 0.05, uDissolve) * smoothstep(0.015, 0.12, p.y) * (1.0 - form * 0.55);
+    vCol = mix(vec3(0.62, 0.8, 1.0), vec3(1.0, 0.8, 0.42), smoothstep(0.72, 0.85, fract(aSeed * 3.71)));
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    gl_PointSize = (1.5 + aSeed * 1.7) * uPixelRatio * (15.0 / -mv.z) * (1.0 - form * 0.35);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+const DOTS_FRAG = /* glsl */ `
+  varying float vA;
+  varying vec3 vCol;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float glow = smoothstep(0.5, 0.05, length(c));
+    gl_FragColor = vec4(vCol * glow * 1.2, glow * vA * 0.85);
+  }
+`;
+
 export function AvatarLanding() {
   const root = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const canvasHost = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const rootEl = root.current;
@@ -116,9 +160,25 @@ export function AvatarLanding() {
     let disposed = false;
     let cleanup: (() => void) | undefined;
 
+    // Warm the model into the HTTP cache while the page is idle, so the scene
+    // is ready the moment the visitor reaches it. Skipped when the visitor
+    // asked to save data; the lazy boot below still works either way.
+    let warmT = 0;
+    const saveData = (navigator as unknown as { connection?: { saveData?: boolean } }).connection
+      ?.saveData;
+    if (!saveData) {
+      const warm = () => void fetch('/assets/avatar.glb').catch(() => {});
+      const idle = (
+        window as unknown as {
+          requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+        }
+      ).requestIdleCallback;
+      if (idle) idle(warm, { timeout: 6000 });
+      else warmT = window.setTimeout(warm, 2500);
+    }
+
     const boot = async () => {
       const THREE = await import('three');
-      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
       if (disposed || !root.current || !canvasHost.current) return;
       // Bloom is desktop-only: three post modules load only where they'll run.
       let post:
@@ -268,13 +328,18 @@ export function AvatarLanding() {
       // The avatar.
       let mixer: THREE.AnimationMixer | undefined;
       let clipDuration = CLIP_END;
-      const gltf = await new GLTFLoader().loadAsync('/assets/avatar.glb');
+      const gltf = await loadAvatarModel((loaded, total) => {
+        if (hintRef.current) {
+          const pct = Math.min(99, Math.round((loaded / total) * 100));
+          hintRef.current.textContent = `materialising · ${pct}%`;
+        }
+      });
+      const avatar = await cloneAvatar(gltf.scene);
       if (disposed) {
         composer?.dispose();
         renderer.dispose();
         return;
       }
-      const avatar = gltf.scene;
       avatar.traverse((o) => {
         // Skinned bounds lag the animation — never let culling hide the body.
         if ((o as THREE.SkinnedMesh).isSkinnedMesh) o.frustumCulled = false;
@@ -287,7 +352,65 @@ export function AvatarLanding() {
         mixer.clipAction(clip).play();
         mixer.setTime(0);
       }
+
+      // Pose the skeleton at the landed hero frame and sample the skinned
+      // surface once — these points are the dissolve/rain targets.
+      if (mixer) {
+        mixer.setTime(clipDuration);
+        avatar.updateMatrixWorld(true);
+      }
+      const targets: number[] = [];
+      const seeds: number[] = [];
+      const dotBudget = isMobile ? 4500 : 9000;
+      const skinned: THREE.SkinnedMesh[] = [];
+      avatar.traverse((o) => {
+        if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned.push(o as THREE.SkinnedMesh);
+      });
+      const totalVerts = skinned.reduce((n, m) => n + m.geometry.attributes.position!.count, 0);
+      const sampleStep = Math.max(1, Math.round(totalVerts / dotBudget));
+      const sv = new THREE.Vector3();
+      for (const m of skinned) {
+        const posAttr = m.geometry.attributes.position!;
+        for (let i = 0; i < posAttr.count; i += sampleStep) {
+          sv.fromBufferAttribute(posAttr, i);
+          m.applyBoneTransform(i, sv);
+          sv.applyMatrix4(m.matrixWorld);
+          targets.push(sv.x, sv.y, sv.z);
+          seeds.push(Math.random());
+        }
+      }
+      if (mixer) mixer.setTime(0);
+      const dotsGeo = new THREE.BufferGeometry();
+      dotsGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(targets), 3));
+      dotsGeo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seeds), 1));
+      const dotsMat = new THREE.ShaderMaterial({
+        vertexShader: DOTS_VERT,
+        fragmentShader: DOTS_FRAG,
+        uniforms: { uDissolve: { value: 0 }, uTime: { value: 0 }, uPixelRatio: { value: dpr } },
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const dots = new THREE.Points(dotsGeo, dotsMat);
+      dots.visible = false;
+      dots.frustumCulled = false;
+      scene.add(dots);
+
+      // The avatar's own materials fade as the dots take over; the glasses
+      // frames get a soft emissive pulse during the head close-up.
+      const avatarMats: THREE.MeshStandardMaterial[] = [];
+      const glassesMats: THREE.MeshStandardMaterial[] = [];
+      avatar.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (!m.isMesh) return;
+        const mats = (Array.isArray(m.material) ? m.material : [m.material]) as THREE.MeshStandardMaterial[];
+        avatarMats.push(...mats);
+        if (o.name.toLowerCase().includes('glasses')) glassesMats.push(...mats);
+      });
+      for (const gm of glassesMats) if (gm.emissive) gm.emissive.set(0x9fd4ff);
+
       rootEl.dataset.ready = 'on';
+      if (hintRef.current) hintRef.current.textContent = 'scroll — he lands';
 
       // --- Scroll choreography ------------------------------------------------
       let t = 0;
@@ -339,7 +462,13 @@ export function AvatarLanding() {
         mouse.x += (mouse.tx - mouse.x) * 0.05;
         mouse.y += (mouse.ty - mouse.y) * 0.05;
 
-        const animTime = timeMap(tSmooth);
+        const u = tSmooth;
+        const clipPhase = Math.min(1, u / PHASE_CLIP);
+        const closeX = Math.min(1, Math.max(0, (u - PHASE_CLIP) / (PHASE_CLOSE - PHASE_CLIP)));
+        const closeB = closeX * closeX * (3 - 2 * closeX); // head close-up blend
+        const dissolve = Math.min(1, Math.max(0, (u - PHASE_CLOSE) / (1 - PHASE_CLOSE)));
+
+        const animTime = timeMap(clipPhase);
         mixer?.setTime(animTime);
 
         // Impact payoff — fired once per pass over the real landing frame.
@@ -363,30 +492,70 @@ export function AvatarLanding() {
         rainMat.uniforms.uTime!.value = now;
 
         // Cinematic camera: high wide shot tracking the fall, settling into a
-        // low hero angle; micro mouse parallax; impact shake.
-        const c = tSmooth;
-        const camX = Math.sin(c * 1.4) * 0.55 + mouse.x * 0.12;
-        const camY = 2.5 - c * 1.55 + mouse.y * -0.08;
-        const camZ = 4.3 - c * 1.5;
+        // low hero angle → push-in on the head (glasses frames) → final wide
+        // 0.5x zoom-out so the whole character reads as it rains away.
+        const c = clipPhase;
+        let camX = Math.sin(c * 1.4) * 0.55 + mouse.x * 0.12;
+        let camY = 2.5 - c * 1.55 + mouse.y * -0.08;
+        let camZ = 4.3 - c * 1.35;
+        let lookX = 0;
+        let lookY = 1.85 - c * 0.85;
+        // Head close-up beat.
+        camX += (0.14 + mouse.x * 0.05 - camX) * closeB;
+        camY += (1.7 - camY) * closeB;
+        camZ += (0.95 - camZ) * closeB;
+        lookX += (0 - lookX) * closeB;
+        lookY += (1.66 - lookY) * closeB;
+        // Final beat: pull all the way back to a full-body wide shot.
+        camX += (0.35 + mouse.x * 0.1 - camX) * dissolve;
+        camY += (1.35 - camY) * dissolve;
+        camZ += (5.6 - camZ) * dissolve;
+        lookX += (0 - lookX) * dissolve;
+        lookY += (1.0 - lookY) * dissolve;
+        camera.fov = 42 - closeB * 8 + dissolve * 16;
+        camera.updateProjectionMatrix();
         const shake = impactEnergy * 0.06;
         camera.position.set(
           camX + (Math.random() - 0.5) * shake,
           camY + (Math.random() - 0.5) * shake,
           camZ,
         );
-        const lookY = 1.85 - c * 0.85;
-        camera.lookAt(0, lookY, 0);
+        camera.lookAt(lookX, lookY, 0);
         camera.rotation.z += impactEnergy * (Math.random() - 0.5) * 0.02;
 
-        // DOM titles: present through the fall, gone once the hero settles.
+        // Glasses glow through the close-up; the body dissolves into dots
+        // that rain down to the ground.
+        const glow = closeB * (0.45 + 0.25 * Math.sin(now * 2.2)) * (1 - dissolve);
+        for (const gm of glassesMats) gm.emissiveIntensity = glow;
+        if (dissolve > 0) {
+          const fade = 1 - Math.min(1, dissolve * 3);
+          avatar.visible = fade > 0.001;
+          if (avatar.visible) {
+            for (const am of avatarMats) {
+              am.transparent = true;
+              am.opacity = fade;
+            }
+          }
+        } else if (!avatar.visible || avatarMats[0]?.transparent) {
+          avatar.visible = true;
+          for (const am of avatarMats) {
+            am.opacity = 1;
+            am.transparent = false;
+          }
+        }
+        dots.visible = dissolve > 0.001;
+        dotsMat.uniforms.uDissolve!.value = dissolve;
+        dotsMat.uniforms.uTime!.value = now;
+
+        // DOM titles: present through the fall, gone before the close-up.
         if (titleRef.current) {
-          const o = Math.min(1, tSmooth * 6) * (1 - Math.min(1, Math.max(0, (tSmooth - 0.8) * 5)));
+          const o = Math.min(1, u * 6) * (1 - Math.min(1, Math.max(0, (u - 0.5) * 5)));
           titleRef.current.style.opacity = o.toFixed(3);
           titleRef.current.style.transform = `translateY(${(1 - o) * 14}px)`;
         }
 
         if (composer && bloom) {
-          bloom.strength = 0.32 + impactEnergy * 0.95;
+          bloom.strength = 0.32 + impactEnergy * 0.95 + closeB * 0.18 + dissolve * 0.4;
           composer.render();
         } else {
           renderer.render(scene, camera);
@@ -442,14 +611,17 @@ export function AvatarLanding() {
         rainMat.dispose();
         burstGeo.dispose();
         burstMat.dispose();
+        dotsGeo.dispose();
+        dotsMat.dispose();
         bloom?.dispose();
         composer?.dispose();
         groundMat.dispose();
         ground.geometry.dispose();
+        // Materials are per-clone — dispose them; geometry and textures are
+        // shared through the module cache and must survive for other scenes.
         avatar.traverse((o) => {
           const m = o as THREE.Mesh;
           if (m.isMesh) {
-            m.geometry.dispose();
             const mats = Array.isArray(m.material) ? m.material : [m.material];
             mats.forEach((mat) => mat.dispose());
           }
@@ -473,6 +645,7 @@ export function AvatarLanding() {
 
     return () => {
       disposed = true;
+      clearTimeout(warmT);
       bootIo.disconnect();
       cleanup?.();
     };
@@ -487,11 +660,11 @@ export function AvatarLanding() {
       <div ref={stage} className={styles.stage}>
         <div ref={canvasHost} className={styles.canvasHost} />
         <div ref={titleRef} className={styles.titles} aria-hidden="true">
-          <span className={styles.kicker}>Enter the developer</span>
+          <span className={styles.kicker}>Enter the visual technologist</span>
           <span className={styles.big}>THE LANDING</span>
-          <span className={styles.ru}>приземление</span>
+          <span className={styles.sub}>developer power</span>
         </div>
-        <div className={styles.hint} aria-hidden="true">
+        <div ref={hintRef} className={styles.hint} aria-hidden="true">
           scroll — he lands
         </div>
       </div>
