@@ -1,10 +1,60 @@
-.bar {
+/* Gamified page meter: seven "level" segments (one per section) fill with the
+   brand gradient as you travel the page, and a glowing spark rides the tip.
+   Everything is transform-only — zero layout work per scroll frame. */
+.meter {
   position: fixed;
   top: 0;
   left: 0;
-  height: 2px;
-  width: 0;
-  background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+  right: 0;
   z-index: 90;
-  box-shadow: 0 0 14px rgba(77, 124, 255, 0.8);
+  display: flex;
+  gap: 5px;
+  padding: 0 5px;
+  pointer-events: none;
+}
+
+.seg {
+  flex: 1;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--accent), var(--accent-cyan) 60%, var(--gold));
+  box-shadow: 0 0 10px rgba(77, 124, 255, 0.55);
+  will-change: transform;
+}
+
+.spark {
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 10px 2px rgba(124, 158, 255, 0.9),
+    0 0 22px 6px rgba(34, 211, 238, 0.5);
+  will-change: transform;
+  animation: sparkPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes sparkPulse {
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark {
+    animation: none;
+  }
 }
