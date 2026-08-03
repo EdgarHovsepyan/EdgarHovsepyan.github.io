@@ -530,13 +530,14 @@ export function Skybox360() {
     let flipAct: THREE.AnimationAction | undefined;
     let landDur = 1.98;
     let flipDur = 2.14;
-    let landOn = true;
     let impactFired = false;
     let impactE = 0;
     let abTime = -1;
     let avatarClone: THREE.Group | undefined;
     let hipsBone: THREE.Object3D | undefined;
-    const avBase = new THREE.Vector3(3.4, FLOOR_Y, -1.13);
+    // 4.6m out on the same azimuth — far enough that the full body (and the
+    // airborne arc above it) always fits the frame, never cropping.
+    const avBase = new THREE.Vector3(4.36, FLOOR_Y, -1.45);
     const flipShift = new THREE.Vector3();
     const hipsW = new THREE.Vector3();
 
@@ -741,7 +742,7 @@ export function Skybox360() {
       let targetPitch = Math.sin(tSmooth * Math.PI) * 0.14 - 0.02 + mouse.y * 0.06;
       if (dwell > 0) {
         const heroYaw = Math.atan2(avBase.x, -avBase.z);
-        const pitchToHim = Math.atan2(hipsW.y, 3.4);
+        const pitchToHim = Math.atan2(hipsW.y, 4.4);
         targetYaw += (heroYaw + mouse.x * 0.09 - targetYaw) * dwell;
         targetPitch += (pitchToHim * 0.85 + mouse.y * 0.05 - targetPitch) * dwell;
       }
@@ -774,8 +775,8 @@ export function Skybox360() {
       // The "boom": energy punches the FOV like a dolly-zoom — the world bursts
       // wider under fast scrolling, clicks and the ceremony — and the panorama
       // itself gets dragged slightly by the motion.
-      // dwell tightens the lens on him; energy still punches it wider
-      const targetFov = 72 + energy * 10 - dwell * 10;
+      // dwell tightens the lens on him gently; energy still punches it wider
+      const targetFov = 72 + energy * 10 - dwell * 5;
       if (Math.abs(camera.fov - targetFov) > 0.03) {
         camera.fov += (targetFov - camera.fov) * 0.1;
         camera.updateProjectionMatrix();
@@ -790,36 +791,34 @@ export function Skybox360() {
 
       // The character's two-act cinematic, scrubbed by the journey:
       // 10–40% superhero landing (falls out of the sky as the pan finds him),
-      // hero-pose hold, 55–80% backflip. One mixer, one enabled clip at a
-      // time; his feet stay planted across the clip hand-off via flipShift.
+      // then a WEIGHTED CROSSFADE (44–56%) morphs the hero pose bone-by-bone
+      // into the flip's start pose — no clip-switch pop, fully reversible —
+      // and 58–82% scrubs the backflip. The root-motion bridge (flipShift)
+      // eases in on the same curve so his feet stay planted throughout.
       if (avMixer && avatarClone && landAct && flipAct) {
-        if (tSmooth < 0.48) {
-          if (!landOn) {
-            landOn = true;
-            flipAct.enabled = false;
-            landAct.enabled = true;
-            avatarClone.position.copy(avBase);
-          }
-          const lt = Math.min(1, Math.max(0, (tSmooth - 0.1) / 0.3));
-          landAct.time = lt * landDur;
-        } else {
-          if (landOn) {
-            landOn = false;
-            landAct.enabled = false;
-            flipAct.enabled = true;
-            avatarClone.position.copy(avBase).add(flipShift);
-          }
-          const ft = Math.min(1, Math.max(0, (tSmooth - 0.55) / 0.25));
-          flipAct.time = ft * flipDur;
-        }
+        const wBlend = sm(tSmooth, 0.44, 0.56);
+        landAct.enabled = wBlend < 1;
+        flipAct.enabled = wBlend > 0;
+        landAct.setEffectiveWeight(1 - wBlend);
+        flipAct.setEffectiveWeight(wBlend);
+        const lt = Math.min(1, Math.max(0, (tSmooth - 0.1) / 0.3));
+        landAct.time = lt * landDur;
+        const ft = Math.min(1, Math.max(0, (tSmooth - 0.58) / 0.24));
+        flipAct.time = ft * flipDur;
+        avatarClone.position.copy(avBase).addScaledVector(flipShift, wBlend);
         avMixer.update(0);
+
+        // A soft sky pulse masks the morph midpoint — the world inhales
+        // before the flip.
+        if (wBlend > 0.4 && wBlend < 0.6) clickKick = Math.max(clickKick, 0.3);
 
         // Impact payoff at the true landing frame (t=0.62s in the clip).
         if (hipsBone) {
           hipsBone.getWorldPosition(hipsW);
           ring.position.set(hipsW.x, FLOOR_Y + 0.01, hipsW.z);
         }
-        if (landOn && landAct.time >= 0.62 && !impactFired) {
+        const landPhase = wBlend < 0.5;
+        if (landPhase && landAct.time >= 0.62 && !impactFired) {
           impactFired = true;
           impactE = 1;
           abTime = 0;
@@ -827,7 +826,7 @@ export function Skybox360() {
           avBurst.position.set(hipsW.x, FLOOR_Y, hipsW.z);
           clickKick = Math.max(clickKick, 0.8); // the whole sky feels the hit
         }
-        if (landOn && landAct.time < 0.54) impactFired = false;
+        if (landPhase && landAct.time < 0.54) impactFired = false;
         impactE *= 0.93;
         ring.visible = true; // contact shadow grounds him in every act
         ringMat.uniforms.uImpact!.value = impactE;
