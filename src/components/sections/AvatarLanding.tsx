@@ -18,8 +18,8 @@ import styles from './AvatarLanding.module.css';
  *      gold burst, camera shake, bloom spike)
  *   2. hero settle
  *   3. camera push-in on the head — the glasses frames pulse emissive
- *   4. final wide zoom-out while the model dissolves into surface-sampled
- *      particle dots that rain down to the ground.
+ *   4. final wide zoom-out — the character stays fully visible and centered
+ *      while surface-sampled energy dots shed off him and rain down.
  *
  * Performance contract: everything (three, GLTFLoader, post) lazy-loads when
  * the section approaches; render loop is in-view + tab-visibility gated; DPR
@@ -396,18 +396,20 @@ export function AvatarLanding() {
       dots.frustumCulled = false;
       scene.add(dots);
 
-      // The avatar's own materials fade as the dots take over; the glasses
-      // frames get a soft emissive pulse during the head close-up.
-      const avatarMats: THREE.MeshStandardMaterial[] = [];
+      // The glasses frames get a soft emissive pulse during the head close-up.
       const glassesMats: THREE.MeshStandardMaterial[] = [];
       avatar.traverse((o) => {
         const m = o as THREE.Mesh;
         if (!m.isMesh) return;
         const mats = (Array.isArray(m.material) ? m.material : [m.material]) as THREE.MeshStandardMaterial[];
-        avatarMats.push(...mats);
         if (o.name.toLowerCase().includes('glasses')) glassesMats.push(...mats);
       });
       for (const gm of glassesMats) if (gm.emissive) gm.emissive.set(0x9fd4ff);
+
+      // Camera-framing anchor: the hips bone is the character's true center of
+      // mass — tracking it keeps him dead-center through fall, crouch and pose.
+      const hipsNode = avatar.getObjectByName('Hips');
+      const hipsV = new THREE.Vector3();
 
       rootEl.dataset.ready = 'on';
       if (hintRef.current) hintRef.current.textContent = 'scroll — he lands';
@@ -418,6 +420,8 @@ export function AvatarLanding() {
       let impactEnergy = 0;
       let fired = false;
       let bTime = -1;
+      let lastAnim = -1;
+      let lastTitleO = -1;
       const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 
       const readScroll = () => {
@@ -469,7 +473,12 @@ export function AvatarLanding() {
         const dissolve = Math.min(1, Math.max(0, (u - PHASE_CLOSE) / (1 - PHASE_CLOSE)));
 
         const animTime = timeMap(clipPhase);
-        mixer?.setTime(animTime);
+        // Only resample the clip when the scrub actually moved — while the
+        // scroll idles, the skeleton costs nothing.
+        if (mixer && Math.abs(animTime - lastAnim) > 0.0004) {
+          mixer.setTime(animTime);
+          lastAnim = animTime;
+        }
 
         // Impact payoff — fired once per pass over the real landing frame.
         if (animTime >= IMPACT_TIME && !fired) {
@@ -491,28 +500,31 @@ export function AvatarLanding() {
         }
         rainMat.uniforms.uTime!.value = now;
 
-        // Cinematic camera: high wide shot tracking the fall, settling into a
-        // low hero angle → push-in on the head (glasses frames) → final wide
-        // 0.5x zoom-out so the whole character reads as it rains away.
+        // Cinematic camera. The look target tracks the hips bone, so the
+        // character is ALWAYS the center of the frame — through the fall, the
+        // crouch and the hero pose, on every aspect ratio.
         const c = clipPhase;
-        let camX = Math.sin(c * 1.4) * 0.55 + mouse.x * 0.12;
-        let camY = 2.5 - c * 1.55 + mouse.y * -0.08;
-        let camZ = 4.3 - c * 1.35;
+        const hipsY = hipsNode ? hipsNode.getWorldPosition(hipsV).y : 1.0;
         let lookX = 0;
-        let lookY = 1.85 - c * 0.85;
-        // Head close-up beat.
+        let lookY = hipsY + 0.12;
+        let camX = Math.sin(c * 1.4) * 0.55 + mouse.x * 0.12;
+        let camY = lookY + 0.75 - c * 0.55 + mouse.y * -0.08;
+        let camZ = 4.2 - c * 1.2;
+        // Head close-up beat (the glasses moment).
         camX += (0.14 + mouse.x * 0.05 - camX) * closeB;
         camY += (1.7 - camY) * closeB;
-        camZ += (0.95 - camZ) * closeB;
-        lookX += (0 - lookX) * closeB;
+        camZ += (1.0 - camZ) * closeB;
         lookY += (1.66 - lookY) * closeB;
-        // Final beat: pull all the way back to a full-body wide shot.
-        camX += (0.35 + mouse.x * 0.1 - camX) * dissolve;
-        camY += (1.35 - camY) * dissolve;
-        camZ += (5.6 - camZ) * dissolve;
-        lookX += (0 - lookX) * dissolve;
-        lookY += (1.0 - lookY) * dissolve;
-        camera.fov = 42 - closeB * 8 + dissolve * 16;
+        // Final beat: pure zoom-out — the avatar stays fully visible, framed
+        // whole, while the energy dots shed off him and rain down.
+        camX += (0.3 + mouse.x * 0.1 - camX) * dissolve;
+        camY += (1.3 - camY) * dissolve;
+        camZ += (6.2 - camZ) * dissolve;
+        lookY += (0.98 - lookY) * dissolve;
+        // Portrait fit: on narrow screens the horizontal frustum shrinks, so
+        // widen the shot with distance — he never crops at the sides.
+        camZ *= Math.min(2.1, Math.max(1, 1.05 / Math.max(camera.aspect, 0.4)));
+        camera.fov = 42 - closeB * 8 + dissolve * 14;
         camera.updateProjectionMatrix();
         const shake = impactEnergy * 0.06;
         camera.position.set(
@@ -523,35 +535,23 @@ export function AvatarLanding() {
         camera.lookAt(lookX, lookY, 0);
         camera.rotation.z += impactEnergy * (Math.random() - 0.5) * 0.02;
 
-        // Glasses glow through the close-up; the body dissolves into dots
-        // that rain down to the ground.
+        // Glasses glow through the close-up. The character himself is never
+        // hidden — the dots are an energy aura shedding off his surface.
         const glow = closeB * (0.45 + 0.25 * Math.sin(now * 2.2)) * (1 - dissolve);
         for (const gm of glassesMats) gm.emissiveIntensity = glow;
-        if (dissolve > 0) {
-          const fade = 1 - Math.min(1, dissolve * 3);
-          avatar.visible = fade > 0.001;
-          if (avatar.visible) {
-            for (const am of avatarMats) {
-              am.transparent = true;
-              am.opacity = fade;
-            }
-          }
-        } else if (!avatar.visible || avatarMats[0]?.transparent) {
-          avatar.visible = true;
-          for (const am of avatarMats) {
-            am.opacity = 1;
-            am.transparent = false;
-          }
-        }
         dots.visible = dissolve > 0.001;
         dotsMat.uniforms.uDissolve!.value = dissolve;
         dotsMat.uniforms.uTime!.value = now;
 
         // DOM titles: present through the fall, gone before the close-up.
+        // Style writes are skipped while the value is stable.
         if (titleRef.current) {
           const o = Math.min(1, u * 6) * (1 - Math.min(1, Math.max(0, (u - 0.5) * 5)));
-          titleRef.current.style.opacity = o.toFixed(3);
-          titleRef.current.style.transform = `translateY(${(1 - o) * 14}px)`;
+          if (Math.abs(o - lastTitleO) > 0.002) {
+            lastTitleO = o;
+            titleRef.current.style.opacity = o.toFixed(3);
+            titleRef.current.style.transform = `translateY(${(1 - o) * 14}px)`;
+          }
         }
 
         if (composer && bloom) {
