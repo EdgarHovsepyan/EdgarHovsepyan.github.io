@@ -725,12 +725,11 @@ export function Skybox360() {
       tSmooth += (t - tSmooth) * 0.09;
       const dv = (tSmooth - tPrev) * 34; // signed scroll velocity
       velocity += (Math.min(1, Math.abs(dv)) - velocity) * 0.12;
-      // Bank into the motion like a drone turning — signed roll, heavily damped.
-      roll += (Math.max(-1, Math.min(1, dv)) * 0.05 - roll) * 0.07;
 
-      // damped cinematic pan: ~205° sweep with a gentle pitch arc. During the
-      // character's two acts the pan DWELLS on him — swings to his azimuth,
-      // pitch tracks his fall out of the sky, then releases back to the sweep.
+      // Dwell first — every motion system below listens to it. While the
+      // character performs, the WORLD HOLDS STILL: no pan, no roll bank, no
+      // sky drag, no FOV pump — he moves, the 360 doesn't. Rotation resumes
+      // the moment the act releases.
       const sm = THREE.MathUtils.smoothstep;
       const dwell = avatarClone
         ? Math.max(
@@ -738,6 +737,13 @@ export function Skybox360() {
             sm(tSmooth, 0.5, 0.56) * (1 - sm(tSmooth, 0.8, 0.88)),
           )
         : 0;
+      // Bank into the motion like a drone turning — signed roll, heavily
+      // damped, suppressed while locked on the character.
+      roll += (Math.max(-1, Math.min(1, dv)) * 0.05 * (1 - dwell) - roll) * 0.07;
+
+      // damped cinematic pan: ~205° sweep with a gentle pitch arc. During the
+      // character's two acts the pan DWELLS on him — swings to his azimuth,
+      // pitch tracks his fall out of the sky, then releases back to the sweep.
       let targetYaw = -0.55 + tSmooth * 3.6 + mouse.x * 0.09;
       let targetPitch = Math.sin(tSmooth * Math.PI) * 0.14 - 0.02 + mouse.y * 0.06;
       if (dwell > 0) {
@@ -775,13 +781,14 @@ export function Skybox360() {
       // The "boom": energy punches the FOV like a dolly-zoom — the world bursts
       // wider under fast scrolling, clicks and the ceremony — and the panorama
       // itself gets dragged slightly by the motion.
-      // dwell tightens the lens on him gently; energy still punches it wider
-      const targetFov = 72 + energy * 10 - dwell * 5;
+      // dwell tightens the lens on him gently; the energy FOV pump is
+      // suppressed while locked on so the frame doesn't breathe under him
+      const targetFov = 72 + energy * 10 * (1 - dwell * 0.75) - dwell * 5;
       if (Math.abs(camera.fov - targetFov) > 0.03) {
         camera.fov += (targetFov - camera.fov) * 0.1;
         camera.updateProjectionMatrix();
       }
-      sky.rotation.y += dv * 0.05;
+      sky.rotation.y += dv * 0.05 * (1 - dwell); // panorama frozen during acts
 
       mouse.x += (mouse.tx - mouse.x) * 0.05;
       mouse.y += (mouse.ty - mouse.y) * 0.05;
@@ -864,7 +871,9 @@ export function Skybox360() {
       ptsMat.uniforms.uTime!.value = time;
       ptsMat.uniforms.uVel!.value = energy;
       skyMat.uniforms.uTime!.value = time;
-      skyMat.uniforms.uVel!.value = energy;
+      // scroll-warp on the panorama is damped while he performs (the impact
+      // kick still punches through via clickKick)
+      skyMat.uniforms.uVel!.value = energy * (1 - dwell * 0.55);
       skyMat.uniforms.uProg!.value = tSmooth;
       (skyMat.uniforms.uMouse!.value as THREE.Vector2).set(
         mouse.x * 0.5 + 0.5,
