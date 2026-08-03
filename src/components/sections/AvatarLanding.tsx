@@ -218,7 +218,9 @@ export function AvatarLanding() {
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x07070a);
-      scene.fog = new THREE.Fog(0x07070a, 6, 13);
+      // Far fog only — the finale camera sits ~6–11m out (portrait fit) and
+      // the character must stay crisp through the whole zoom-out.
+      scene.fog = new THREE.Fog(0x07070a, 9, 24);
 
       const camera = new THREE.PerspectiveCamera(
         42,
@@ -380,6 +382,7 @@ export function AvatarLanding() {
         }
       }
       if (mixer) mixer.setTime(0);
+      avatar.updateMatrixWorld(true);
       const dotsGeo = new THREE.BufferGeometry();
       dotsGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(targets), 3));
       dotsGeo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seeds), 1));
@@ -406,10 +409,15 @@ export function AvatarLanding() {
       });
       for (const gm of glassesMats) if (gm.emissive) gm.emissive.set(0x9fd4ff);
 
-      // Camera-framing anchor: the hips bone is the character's true center of
-      // mass — tracking it keeps him dead-center through fall, crouch and pose.
+      // Camera-framing anchors. The clip has ROOT MOTION — the Hips travel
+      // from (−0.04, 2.52, 1.05) to (−0.32, 0.41, 1.65) — so nothing may
+      // assume he is at the origin: camera, ground FX and burst all follow
+      // the live bone world positions every frame.
       const hipsNode = avatar.getObjectByName('Hips');
-      const hipsV = new THREE.Vector3();
+      const headNode = avatar.getObjectByName('Head');
+      const hipsV = new THREE.Vector3(0, 1, 0);
+      const headV = new THREE.Vector3(0, 1.6, 0);
+      const lookV = new THREE.Vector3();
 
       rootEl.dataset.ready = 'on';
       if (hintRef.current) hintRef.current.textContent = 'scroll — he lands';
@@ -480,12 +488,20 @@ export function AvatarLanding() {
           lastAnim = animTime;
         }
 
-        // Impact payoff — fired once per pass over the real landing frame.
+        // Live character anchors (world space, root motion included).
+        if (hipsNode) hipsNode.getWorldPosition(hipsV);
+        if (headNode) headNode.getWorldPosition(headV);
+        // Grounded FX follow him: contact shadow + shock ring under his feet.
+        ground.position.set(hipsV.x, 0.001, hipsV.z);
+
+        // Impact payoff — fired once per pass over the real landing frame,
+        // at his actual floor position.
         if (animTime >= IMPACT_TIME && !fired) {
           fired = true;
           impactEnergy = 1;
           bTime = 0;
           burst.visible = true;
+          burst.position.set(hipsV.x, 0, hipsV.z);
         }
         if (animTime < IMPACT_TIME - 0.08) fired = false;
         impactEnergy *= 0.93;
@@ -500,39 +516,42 @@ export function AvatarLanding() {
         }
         rainMat.uniforms.uTime!.value = now;
 
-        // Cinematic camera. The look target tracks the hips bone, so the
-        // character is ALWAYS the center of the frame — through the fall, the
-        // crouch and the hero pose, on every aspect ratio.
+        // Cinematic camera — fully RELATIVE to the character. The look target
+        // blends body-center → head (close-up) → body (finale), and the
+        // camera sits at a beat-blended offset FROM that target, so he is
+        // dead-center at every scroll position regardless of root motion.
         const c = clipPhase;
-        const hipsY = hipsNode ? hipsNode.getWorldPosition(hipsV).y : 1.0;
-        let lookX = 0;
-        let lookY = hipsY + 0.12;
-        let camX = Math.sin(c * 1.4) * 0.55 + mouse.x * 0.12;
-        let camY = lookY + 0.75 - c * 0.55 + mouse.y * -0.08;
-        let camZ = 4.2 - c * 1.2;
-        // Head close-up beat (the glasses moment).
-        camX += (0.14 + mouse.x * 0.05 - camX) * closeB;
-        camY += (1.7 - camY) * closeB;
-        camZ += (1.0 - camZ) * closeB;
-        lookY += (1.66 - lookY) * closeB;
-        // Final beat: pure zoom-out — the avatar stays fully visible, framed
-        // whole, while the energy dots shed off him and rain down.
-        camX += (0.3 + mouse.x * 0.1 - camX) * dissolve;
-        camY += (1.3 - camY) * dissolve;
-        camZ += (6.2 - camZ) * dissolve;
-        lookY += (0.98 - lookY) * dissolve;
+        lookV.set(hipsV.x, hipsV.y + 0.12, hipsV.z);
+        lookV.lerp(headV, closeB);
+        lookV.x += (hipsV.x - lookV.x) * dissolve;
+        lookV.y += (hipsV.y + 0.25 - lookV.y) * dissolve;
+        lookV.z += (hipsV.z - lookV.z) * dissolve;
+
+        let offX = Math.sin(c * 1.4) * 0.55 + mouse.x * 0.12;
+        let offY = 0.75 - c * 0.55 + mouse.y * -0.08;
+        let offZ = 4.2 - c * 1.2;
+        // Head close-up beat (the glasses moment) — in FRONT of his face.
+        offX += (0.32 + mouse.x * 0.06 - offX) * closeB;
+        offY += (0.03 - offY) * closeB;
+        offZ += (1.15 - offZ) * closeB;
+        // Final beat: pure zoom-out — full body, never hidden.
+        offX += (0.3 + mouse.x * 0.1 - offX) * dissolve;
+        offY += (0.45 - offY) * dissolve;
+        offZ += (6.2 - offZ) * dissolve;
         // Portrait fit: on narrow screens the horizontal frustum shrinks, so
         // widen the shot with distance — he never crops at the sides.
-        camZ *= Math.min(2.1, Math.max(1, 1.05 / Math.max(camera.aspect, 0.4)));
+        const fit = Math.min(2.1, Math.max(1, 1.05 / Math.max(camera.aspect, 0.4)));
+        offX *= fit;
+        offZ *= fit;
         camera.fov = 42 - closeB * 8 + dissolve * 14;
         camera.updateProjectionMatrix();
         const shake = impactEnergy * 0.06;
         camera.position.set(
-          camX + (Math.random() - 0.5) * shake,
-          camY + (Math.random() - 0.5) * shake,
-          camZ,
+          lookV.x + offX + (Math.random() - 0.5) * shake,
+          lookV.y + offY + (Math.random() - 0.5) * shake,
+          lookV.z + offZ,
         );
-        camera.lookAt(lookX, lookY, 0);
+        camera.lookAt(lookV);
         camera.rotation.z += impactEnergy * (Math.random() - 0.5) * 0.02;
 
         // Glasses glow through the close-up. The character himself is never
@@ -591,10 +610,13 @@ export function AvatarLanding() {
       document.addEventListener('visibilitychange', onVis);
 
       if (reduced) {
-        // Static hero pose, fully landed.
+        // Static hero pose, fully landed — framed on his real position.
         mixer?.setTime(clipDuration);
-        camera.position.set(0.3, 1.0, 2.9);
-        camera.lookAt(0, 1.0, 0);
+        avatar.updateMatrixWorld(true);
+        if (hipsNode) hipsNode.getWorldPosition(hipsV);
+        ground.position.set(hipsV.x, 0.001, hipsV.z);
+        camera.position.set(hipsV.x + 0.35, hipsV.y + 0.6, hipsV.z + 3.2);
+        camera.lookAt(hipsV.x, hipsV.y + 0.3, hipsV.z);
         if (titleRef.current) titleRef.current.style.opacity = '1';
         if (composer) composer.render();
         else renderer.render(scene, camera);
