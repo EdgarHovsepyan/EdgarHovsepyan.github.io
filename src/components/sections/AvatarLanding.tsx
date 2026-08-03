@@ -31,7 +31,8 @@ const IMPACT_TIME = 0.62; // s — first ground contact in the clip
 const CLIP_END = 1.98;
 // Overall scroll phases: landing → head close-up (the frames) → dissolve+rain.
 const PHASE_CLIP = 0.6; // scroll fraction owned by the landing animation
-const PHASE_CLOSE = 0.78; // close-up fully framed here; dissolve starts after
+const PHASE_CLOSE = 0.74; // close-up fully framed here; dissolve starts after
+const PHASE_END = 0.96; // zoom-out fully wide here — never clipped by the exit
 
 const GROUND_FRAG = /* glsl */ `
   uniform float uImpact; // 1 at impact, decays to 0
@@ -119,15 +120,17 @@ const DOTS_VERT = /* glsl */ `
     // Head releases first, feet last; every dot staggered by its own seed.
     float head = clamp(position.y / 1.85, 0.0, 1.0);
     float form = clamp(uDissolve * 1.6 - (1.0 - head) * 0.35 - aSeed * 0.2, 0.0, 1.0);
-    // brief shimmer off the surface, then rain straight down
+    // brief shimmer off the surface, then rain straight down — with a
+    // continuous time-driven drift so the dots always feel alive.
     p.x += sin(uTime * (1.0 + aSeed * 2.0) + aSeed * 43.0) * form * 0.07;
     p.z += cos(uTime * (1.3 + aSeed) + aSeed * 17.0) * form * 0.07;
     float fall = pow(max(form - 0.22, 0.0) / 0.78, 1.6) * (2.8 + aSeed * 1.6);
+    fall += form * (0.22 + 0.18 * sin(uTime * 0.9 + aSeed * 31.0));
     p.y = max(p.y - fall, 0.015);
     vA = smoothstep(0.0, 0.05, uDissolve) * smoothstep(0.015, 0.12, p.y) * (1.0 - form * 0.55);
     vCol = mix(vec3(0.62, 0.8, 1.0), vec3(1.0, 0.8, 0.42), smoothstep(0.72, 0.85, fract(aSeed * 3.71)));
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    gl_PointSize = (1.5 + aSeed * 1.7) * uPixelRatio * (15.0 / -mv.z) * (1.0 - form * 0.35);
+    gl_PointSize = (1.5 + aSeed * 1.7) * uPixelRatio * (8.0 / -mv.z) * (1.0 - form * 0.35);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -138,7 +141,7 @@ const DOTS_FRAG = /* glsl */ `
   void main() {
     vec2 c = gl_PointCoord - 0.5;
     float glow = smoothstep(0.5, 0.05, length(c));
-    gl_FragColor = vec4(vCol * glow * 1.2, glow * vA * 0.85);
+    gl_FragColor = vec4(vCol * glow * 0.9, glow * vA * 0.38);
   }
 `;
 
@@ -478,7 +481,7 @@ export function AvatarLanding() {
         const clipPhase = Math.min(1, u / PHASE_CLIP);
         const closeX = Math.min(1, Math.max(0, (u - PHASE_CLIP) / (PHASE_CLOSE - PHASE_CLIP)));
         const closeB = closeX * closeX * (3 - 2 * closeX); // head close-up blend
-        const dissolve = Math.min(1, Math.max(0, (u - PHASE_CLOSE) / (1 - PHASE_CLOSE)));
+        const dissolve = Math.min(1, Math.max(0, (u - PHASE_CLOSE) / (PHASE_END - PHASE_CLOSE)));
 
         const animTime = timeMap(clipPhase);
         // Only resample the clip when the scrub actually moved — while the
@@ -530,10 +533,11 @@ export function AvatarLanding() {
         let offX = Math.sin(c * 1.4) * 0.55 + mouse.x * 0.12;
         let offY = 0.75 - c * 0.55 + mouse.y * -0.08;
         let offZ = 4.2 - c * 1.2;
-        // Head close-up beat (the glasses moment) — in FRONT of his face.
+        // Head close-up beat (the glasses moment) — in FRONT of his face,
+        // slightly below head level since the hero pose tilts the head down.
         offX += (0.32 + mouse.x * 0.06 - offX) * closeB;
-        offY += (0.03 - offY) * closeB;
-        offZ += (1.15 - offZ) * closeB;
+        offY += (-0.12 - offY) * closeB;
+        offZ += (1.35 - offZ) * closeB;
         // Final beat: pure zoom-out — full body, never hidden.
         offX += (0.3 + mouse.x * 0.1 - offX) * dissolve;
         offY += (0.45 - offY) * dissolve;
@@ -574,7 +578,7 @@ export function AvatarLanding() {
         }
 
         if (composer && bloom) {
-          bloom.strength = 0.32 + impactEnergy * 0.95 + closeB * 0.18 + dissolve * 0.4;
+          bloom.strength = 0.32 + impactEnergy * 0.95 + closeB * 0.18 + dissolve * 0.12;
           composer.render();
         } else {
           renderer.render(scene, camera);
