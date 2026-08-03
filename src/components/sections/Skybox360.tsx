@@ -253,6 +253,52 @@ const POINTS_FRAG = /* glsl */ `
   }
 `;
 
+// Avatar impact FX — gold shock ring + contact shadow under his feet, and a
+// pooled radial spark burst fired once when the landing clip hits the ground.
+const RING_FRAG = /* glsl */ `
+  uniform float uImpact; // 1 at impact, decays to 0
+  varying vec2 vUv;
+  void main() {
+    vec2 p = vUv - 0.5;
+    float r = length(p) * 2.0;
+    float shadow = smoothstep(0.55, 0.05, r) * 0.75;
+    float ringR = (1.0 - uImpact) * 0.9 + 0.08;
+    float ring = exp(-pow((r - ringR) * 14.0, 2.0)) * uImpact;
+    vec3 col = vec3(1.0, 0.78, 0.35) * ring * 1.6;
+    float alpha = max(shadow * 0.55, ring * 0.9);
+    if (alpha < 0.01) discard;
+    gl_FragColor = vec4(col, alpha * 0.9);
+  }
+`;
+
+const AVBURST_VERT = /* glsl */ `
+  attribute vec3 aDir;
+  attribute float aSpeed;
+  uniform float uBTime;
+  uniform float uPixelRatio;
+  varying float vLife;
+  void main() {
+    float life = clamp(uBTime / 0.9, 0.0, 1.0);
+    vLife = 1.0 - life;
+    float ease = 1.0 - pow(1.0 - life, 2.4);
+    vec3 p = vec3(0.0, 0.06, 0.0) + aDir * (aSpeed * ease * 2.2);
+    p.y += aDir.y * 0.4 * ease - life * life * 1.1;
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    gl_PointSize = (2.2 + aSpeed) * uPixelRatio * (20.0 / -mv.z) * (0.3 + vLife);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+const AVBURST_FRAG = /* glsl */ `
+  varying float vLife;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float glow = smoothstep(0.5, 0.0, length(c));
+    glow *= glow;
+    gl_FragColor = vec4(vec3(1.0, 0.8, 0.34) * glow * (0.5 + vLife), glow * vLife);
+  }
+`;
+
 function makeNameTexture(THREE: typeof import('three')): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 2048;
@@ -297,6 +343,23 @@ export function Skybox360() {
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.matchMedia('(max-width: 700px)').matches;
+
+    // Warm the 5MB character into the HTTP cache while the page is idle so
+    // the scene is ready the moment the visitor reaches it (skipped when the
+    // visitor asked to save data; the lazy boot works either way).
+    let warmT = 0;
+    const saveData = (navigator as unknown as { connection?: { saveData?: boolean } }).connection
+      ?.saveData;
+    if (!saveData) {
+      const warm = () => void fetch('/assets/avatar.glb').catch(() => {});
+      const idle = (
+        window as unknown as {
+          requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+        }
+      ).requestIdleCallback;
+      if (idle) idle(warm, { timeout: 6000 });
+      else warmT = window.setTimeout(warm, 2500);
+    }
 
     // The 360° scene runs on mobile too (lower DPR, the smaller panorama and a
     // reduced particle count below). The poster art shows until it takes over.
@@ -455,18 +518,72 @@ export function Skybox360() {
     };
     rootEl.addEventListener('click', onStageClick);
 
-    // --- The character: backflip scrubbed by the journey --------------------
-    // Reuses the already-downloaded avatar (shared module cache) and a 137KB
-    // animation-only GLB — the full 5MB model is never fetched twice. He
-    // stands on the panorama floor where the pan crosses mid-journey and the
-    // scroll scrubs his backflip.
-    let flipMixer: THREE.AnimationMixer | undefined;
+    // --- The character: full cinematic integrated into the panorama ---------
+    // One character, two clips, one renderer. The superhero LANDING plays
+    // over 10–40% of the journey (he falls out of the sky as the pan finds
+    // him, impact fires a gold shock ring + spark burst under his feet),
+    // he holds the hero pose, then the BACKFLIP scrubs over 55–80%.
+    // Reuses the shared model cache + the 137KB animation-only flip GLB.
+    const FLOOR_Y = -1.62;
+    let avMixer: THREE.AnimationMixer | undefined;
+    let landAct: THREE.AnimationAction | undefined;
+    let flipAct: THREE.AnimationAction | undefined;
+    let landDur = 1.98;
     let flipDur = 2.14;
+    let landOn = true;
+    let impactFired = false;
+    let impactE = 0;
+    let abTime = -1;
     let avatarClone: THREE.Group | undefined;
+    let hipsBone: THREE.Object3D | undefined;
+    const avBase = new THREE.Vector3(3.4, FLOOR_Y, -1.13);
+    const flipShift = new THREE.Vector3();
+    const hipsW = new THREE.Vector3();
+
+    // Impact FX (created with the scene so cleanup is unconditional).
+    const ringMat = new THREE.ShaderMaterial({
+      vertexShader:
+        'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: RING_FRAG,
+      uniforms: { uImpact: { value: 0 } },
+      transparent: true,
+      depthWrite: false,
+    });
+    const ring = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.visible = false;
+    scene.add(ring);
+    const AB_COUNT = 70;
+    const abDir = new Float32Array(AB_COUNT * 3);
+    const abSpeed = new Float32Array(AB_COUNT);
+    for (let i = 0; i < AB_COUNT; i++) {
+      const th = Math.random() * Math.PI * 2;
+      abDir[i * 3] = Math.cos(th);
+      abDir[i * 3 + 1] = 0.25 + Math.random() * 0.7;
+      abDir[i * 3 + 2] = Math.sin(th);
+      abSpeed[i] = 0.5 + Math.random() * 0.9;
+    }
+    const abGeo = new THREE.BufferGeometry();
+    abGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(AB_COUNT * 3), 3));
+    abGeo.setAttribute('aDir', new THREE.BufferAttribute(abDir, 3));
+    abGeo.setAttribute('aSpeed', new THREE.BufferAttribute(abSpeed, 1));
+    const abMat = new THREE.ShaderMaterial({
+      vertexShader: AVBURST_VERT,
+      fragmentShader: AVBURST_FRAG,
+      uniforms: { uBTime: { value: 0 }, uPixelRatio: { value: dpr } },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const avBurst = new THREE.Points(abGeo, abMat);
+    avBurst.visible = false;
+    avBurst.frustumCulled = false;
+    scene.add(avBurst);
+
     void (async () => {
       try {
-        const [gltf, clip] = await Promise.all([loadAvatarModel(), loadFlipClip()]);
-        if (disposed || !clip) return;
+        const [gltf, flipClip] = await Promise.all([loadAvatarModel(), loadFlipClip()]);
+        if (disposed || !flipClip) return;
         const av = await cloneAvatar(gltf.scene);
         if (disposed) return;
         // The sky/name/points are shader-lit; these lights exist only for him.
@@ -477,14 +594,43 @@ export function Skybox360() {
         av.traverse((o) => {
           if ((o as THREE.SkinnedMesh).isSkinnedMesh) o.frustumCulled = false;
         });
-        // Where the camera looks at mid-journey (yaw ≈ 1.25 rad), facing us.
-        av.position.set(3.4, -1.62, -1.13);
+        // Where the camera looks as the pan crosses him, facing us.
+        av.position.copy(avBase);
         av.rotation.y = Math.atan2(-av.position.x, -av.position.z);
         scene.add(av);
-        flipDur = clip.duration - 0.02;
-        flipMixer = new THREE.AnimationMixer(av);
-        flipMixer.clipAction(clip).play();
-        flipMixer.setTime(0);
+
+        const landClip = gltf.animations[0];
+        avMixer = new THREE.AnimationMixer(av);
+        if (landClip) {
+          landDur = landClip.duration - 0.02;
+          landAct = avMixer.clipAction(landClip);
+          landAct.play();
+        }
+        flipDur = flipClip.duration - 0.02;
+        flipAct = avMixer.clipAction(flipClip);
+        flipAct.play();
+        flipAct.enabled = false;
+
+        // The landing clip carries root motion (he lands ~1.65m forward of
+        // where he spawns) but the flip clip starts near the origin — bridge
+        // the hand-off so his feet stay planted between clips.
+        hipsBone = av.getObjectByName('Hips') ?? undefined;
+        if (hipsBone && landAct) {
+          landAct.time = landDur;
+          avMixer.update(0);
+          const endP = hipsBone.position.clone();
+          landAct.enabled = false;
+          flipAct.enabled = true;
+          flipAct.time = 0;
+          avMixer.update(0);
+          flipShift.subVectors(endP, hipsBone.position);
+          flipShift.y = 0;
+          flipShift.applyAxisAngle(new THREE.Vector3(0, 1, 0), av.rotation.y);
+          flipAct.enabled = false;
+          landAct.enabled = true;
+          landAct.time = 0;
+          avMixer.update(0);
+        }
         avatarClone = av;
         rootEl.dataset.flip = 'on';
       } catch {
@@ -509,7 +655,8 @@ export function Skybox360() {
       depthTest: false,
     });
     const namePlane = new THREE.Mesh(new THREE.PlaneGeometry(7.4, 1.85, 96, 12), nameMat);
-    namePlane.position.set(0, 0, -5.4);
+    // Raised above eye-line so the character's acts play under it, not behind.
+    namePlane.position.set(0, 1.05, -5.4);
     // Fit the name inside the horizontal frustum — on portrait phones the
     // 7.4-unit plane is wider than the view and the name crops at the sides.
     const fitName = () => {
@@ -580,11 +727,28 @@ export function Skybox360() {
       // Bank into the motion like a drone turning — signed roll, heavily damped.
       roll += (Math.max(-1, Math.min(1, dv)) * 0.05 - roll) * 0.07;
 
-      // damped cinematic pan: ~205° sweep with a gentle pitch arc
-      const targetYaw = -0.55 + tSmooth * 3.6 + mouse.x * 0.09;
-      const targetPitch = Math.sin(tSmooth * Math.PI) * 0.14 - 0.02 + mouse.y * 0.06;
-      yaw += (targetYaw - yaw) * 0.06;
-      pitch += (targetPitch - pitch) * 0.06;
+      // damped cinematic pan: ~205° sweep with a gentle pitch arc. During the
+      // character's two acts the pan DWELLS on him — swings to his azimuth,
+      // pitch tracks his fall out of the sky, then releases back to the sweep.
+      const sm = THREE.MathUtils.smoothstep;
+      const dwell = avatarClone
+        ? Math.max(
+            sm(tSmooth, 0.04, 0.1) * (1 - sm(tSmooth, 0.42, 0.5)),
+            sm(tSmooth, 0.5, 0.56) * (1 - sm(tSmooth, 0.8, 0.88)),
+          )
+        : 0;
+      let targetYaw = -0.55 + tSmooth * 3.6 + mouse.x * 0.09;
+      let targetPitch = Math.sin(tSmooth * Math.PI) * 0.14 - 0.02 + mouse.y * 0.06;
+      if (dwell > 0) {
+        const heroYaw = Math.atan2(avBase.x, -avBase.z);
+        const pitchToHim = Math.atan2(hipsW.y, 3.4);
+        targetYaw += (heroYaw + mouse.x * 0.09 - targetYaw) * dwell;
+        targetPitch += (pitchToHim * 0.85 + mouse.y * 0.05 - targetPitch) * dwell;
+      }
+      // stronger damping while dwelling — the camera locks on before the act
+      const damp = 0.06 + dwell * 0.05;
+      yaw += (targetYaw - yaw) * damp;
+      pitch += (targetPitch - pitch) * damp;
       camera.rotation.set(pitch, -yaw, roll, 'YXZ');
 
       // Game-loop energy: scroll velocity + click impact + the end-of-journey
@@ -610,7 +774,8 @@ export function Skybox360() {
       // The "boom": energy punches the FOV like a dolly-zoom — the world bursts
       // wider under fast scrolling, clicks and the ceremony — and the panorama
       // itself gets dragged slightly by the motion.
-      const targetFov = 72 + energy * 10;
+      // dwell tightens the lens on him; energy still punches it wider
+      const targetFov = 72 + energy * 10 - dwell * 10;
       if (Math.abs(camera.fov - targetFov) > 0.03) {
         camera.fov += (targetFov - camera.fov) * 0.1;
         camera.updateProjectionMatrix();
@@ -623,11 +788,57 @@ export function Skybox360() {
       // particles: rotate faster than the camera for depth
       points.rotation.y = yaw * 0.35 + time * 0.01;
 
-      // The backflip: scrubbed over the 25–75% window of the pan, so he
-      // launches as the camera finds him and sticks the landing as it leaves.
-      if (flipMixer) {
-        const ft = Math.min(1, Math.max(0, (tSmooth - 0.25) / 0.5));
-        flipMixer.setTime(ft * flipDur);
+      // The character's two-act cinematic, scrubbed by the journey:
+      // 10–40% superhero landing (falls out of the sky as the pan finds him),
+      // hero-pose hold, 55–80% backflip. One mixer, one enabled clip at a
+      // time; his feet stay planted across the clip hand-off via flipShift.
+      if (avMixer && avatarClone && landAct && flipAct) {
+        if (tSmooth < 0.48) {
+          if (!landOn) {
+            landOn = true;
+            flipAct.enabled = false;
+            landAct.enabled = true;
+            avatarClone.position.copy(avBase);
+          }
+          const lt = Math.min(1, Math.max(0, (tSmooth - 0.1) / 0.3));
+          landAct.time = lt * landDur;
+        } else {
+          if (landOn) {
+            landOn = false;
+            landAct.enabled = false;
+            flipAct.enabled = true;
+            avatarClone.position.copy(avBase).add(flipShift);
+          }
+          const ft = Math.min(1, Math.max(0, (tSmooth - 0.55) / 0.25));
+          flipAct.time = ft * flipDur;
+        }
+        avMixer.update(0);
+
+        // Impact payoff at the true landing frame (t=0.62s in the clip).
+        if (hipsBone) {
+          hipsBone.getWorldPosition(hipsW);
+          ring.position.set(hipsW.x, FLOOR_Y + 0.01, hipsW.z);
+        }
+        if (landOn && landAct.time >= 0.62 && !impactFired) {
+          impactFired = true;
+          impactE = 1;
+          abTime = 0;
+          avBurst.visible = true;
+          avBurst.position.set(hipsW.x, FLOOR_Y, hipsW.z);
+          clickKick = Math.max(clickKick, 0.8); // the whole sky feels the hit
+        }
+        if (landOn && landAct.time < 0.54) impactFired = false;
+        impactE *= 0.93;
+        ring.visible = true; // contact shadow grounds him in every act
+        ringMat.uniforms.uImpact!.value = impactE;
+        if (abTime >= 0) {
+          abTime += dt2;
+          abMat.uniforms.uBTime!.value = abTime;
+          if (abTime > 0.9) {
+            abTime = -1;
+            avBurst.visible = false;
+          }
+        }
       }
 
       // Psychology captions — one thought per act of the flip.
@@ -728,6 +939,10 @@ export function Skybox360() {
             mats.forEach((mat) => mat.dispose());
           }
         });
+        ring.geometry.dispose();
+        ringMat.dispose();
+        abGeo.dispose();
+        abMat.dispose();
         ptsGeo.dispose();
         ptsMat.dispose();
         nameMat.dispose();
@@ -742,6 +957,7 @@ export function Skybox360() {
 
     return () => {
       disposed = true;
+      clearTimeout(warmT);
       cleanup?.();
     };
   }, []);

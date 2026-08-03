@@ -16,7 +16,6 @@ import { Awards } from './components/sections/Awards.tsx';
 import { Timeline } from './components/sections/Timeline.tsx';
 import { Work } from './components/sections/Work.tsx';
 import { Games } from './components/sections/Games.tsx';
-import { AvatarLanding } from './components/sections/AvatarLanding.tsx';
 import { ExtraStudio } from './components/sections/ExtraStudio.tsx';
 import { Skybox360 } from './components/sections/Skybox360.tsx';
 import { Expertise } from './components/sections/Expertise.tsx';
@@ -44,7 +43,6 @@ export function App() {
         <Work />
         <Games />
         <ExtraStudio />
-        <AvatarLanding />
         <Skybox360 />
         <Expertise />
         <Resume />
