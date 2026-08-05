@@ -1,0 +1,117 @@
+/* Dream objects floating above the whole site — transform/opacity only,
+   blurred and blended so they read as atmosphere, never as UI. */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.defs {
+  position: absolute;
+}
+
+.obj {
+  position: absolute;
+  will-change: transform;
+  mix-blend-mode: screen;
+}
+
+/* A glowing dream orb — a small moon that ignores gravity. */
+.orb {
+  top: 18%;
+  left: 78%;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 30%,
+    rgba(200, 220, 255, 0.5),
+    rgba(124, 158, 255, 0.16) 45%,
+    transparent 70%
+  );
+  filter: blur(2px);
+  animation: drift-a 26s ease-in-out infinite;
+  transform: translateY(calc(var(--scroll, 0) * -14vh));
+}
+
+/* A thin levitating ring, tilted like a halo mid-fall. */
+.ring {
+  top: 62%;
+  left: 8%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 1px solid rgba(229, 192, 123, 0.34);
+  box-shadow:
+    0 0 24px rgba(229, 192, 123, 0.12),
+    inset 0 0 24px rgba(229, 192, 123, 0.08);
+  filter: blur(0.5px);
+  animation: drift-b 34s ease-in-out infinite;
+  transform: rotateX(64deg) translateY(calc(var(--scroll, 0) * 18vh));
+}
+
+/* An inverted monolith — the impossible standing stone. */
+.monolith {
+  top: 34%;
+  left: 30%;
+  width: 14px;
+  height: 120px;
+  background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.2) 40%, transparent);
+  border-left: 1px solid rgba(34, 211, 238, 0.22);
+  filter: blur(1px);
+  animation: drift-c 40s ease-in-out infinite;
+  transform: rotate(187deg) translateY(calc(var(--scroll, 0) * -9vh));
+}
+
+@keyframes drift-a {
+  0%,
+  100% {
+    translate: 0 0;
+    opacity: 0.75;
+  }
+  50% {
+    translate: -5vw 6vh;
+    opacity: 1;
+  }
+}
+
+@keyframes drift-b {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 6vw -8vh;
+  }
+}
+
+@keyframes drift-c {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  50% {
+    translate: 4vw 5vh;
+    rotate: 14deg;
+  }
+}
+
+@media (max-width: 700px) {
+  .monolith {
+    display: none;
+  }
+
+  .orb {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obj {
+    animation: none;
+  }
+}

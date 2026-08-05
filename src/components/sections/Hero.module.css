@@ -160,6 +160,14 @@
   filter: drop-shadow(0 8px 40px rgba(0, 0, 0, 0.6));
 }
 
+/* Dali breathing: on desktop the wordmark melts almost imperceptibly through
+   an animated turbulence displacement (defined once in SurrealLayer). */
+@media (min-width: 701px) and (prefers-reduced-motion: no-preference) {
+  .wordmarkImg {
+    filter: url(#dream-melt) drop-shadow(0 8px 40px rgba(0, 0, 0, 0.6));
+  }
+}
+
 .surname {
   margin: 0;
   font-family: var(--font-cond);

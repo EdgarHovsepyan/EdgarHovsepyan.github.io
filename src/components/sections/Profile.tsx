@@ -1,3 +1,4 @@
+import { DreamEye } from '../ui/DreamEye.tsx';
 import { Reveal } from '../ui/Reveal.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import styles from './Profile.module.css';
@@ -8,6 +9,7 @@ export function Profile() {
       <div className={styles.grid}>
         <Reveal>
           <SectionHeader index="01" label="Profile" />
+          <DreamEye />
           <div className={styles.lead}>
             50+ games shipped, every one profiled on a mid-tier Android before it went live.
           </div>

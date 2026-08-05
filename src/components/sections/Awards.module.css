@@ -137,3 +137,34 @@
 .secondBadge::after {
   background: linear-gradient(270deg, transparent, rgba(229, 192, 123, 0.55));
 }
+
+
+/* Surreal levitation: the award badges hover free of gravity, each on its
+   own slow phase — transform-only, GPU-composited. */
+.badge,
+.secondBadge {
+  animation: levitate 7s ease-in-out infinite;
+  will-change: transform;
+}
+
+.secondBadge {
+  animation-delay: -3.2s;
+  animation-duration: 8.5s;
+}
+
+@keyframes levitate {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(-0.6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge,
+  .secondBadge {
+    animation: none;
+  }
+}
