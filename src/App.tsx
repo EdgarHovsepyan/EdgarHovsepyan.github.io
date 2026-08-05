@@ -3,6 +3,7 @@ import { Background } from './components/effects/Background.tsx';
 import { CursorSpotlight } from './components/effects/CursorSpotlight.tsx';
 import { Grain } from './components/effects/Grain.tsx';
 import { ScrollProgress } from './components/effects/ScrollProgress.tsx';
+import { SurrealLayer } from './components/effects/SurrealLayer.tsx';
 import { CustomCursor } from './components/effects/CustomCursor.tsx';
 import { SoundToggle } from './components/effects/SoundToggle.tsx';
 import { SideRails } from './components/layout/SideRails.tsx';
@@ -29,6 +30,7 @@ export function App() {
       <Background />
       <CursorSpotlight />
       <Grain />
+      <SurrealLayer />
       <ScrollProgress />
       <CustomCursor />
       <SideRails />

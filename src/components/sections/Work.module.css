@@ -424,3 +424,33 @@
     transform: none;
   }
 }
+
+
+/* Surreal blob chips: project tags slowly morph their silhouette like
+   soft melting objects — border-radius only, zero layout cost. */
+@media (prefers-reduced-motion: no-preference) {
+  .panelTags > * {
+    animation: blobMorph 9s ease-in-out infinite;
+  }
+
+  .panelTags > *:nth-child(2n) {
+    animation-delay: -3s;
+  }
+
+  .panelTags > *:nth-child(3n) {
+    animation-delay: -6s;
+  }
+}
+
+@keyframes blobMorph {
+  0%,
+  100% {
+    border-radius: 100px;
+  }
+  33% {
+    border-radius: 18px 100px 60px 100px;
+  }
+  66% {
+    border-radius: 100px 24px 100px 60px;
+  }
+}

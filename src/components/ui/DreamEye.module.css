@@ -1,0 +1,38 @@
+.eye {
+  width: clamp(84px, 9vw, 120px);
+  height: auto;
+  color: rgba(229, 192, 123, 0.6);
+  overflow: visible;
+}
+
+.pupil {
+  fill: var(--accent-cyan);
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.7));
+}
+
+/* The lid sweeps down in a slow dream blink every so often. */
+.lid path {
+  fill: #07070a;
+  opacity: 0;
+  animation: blink 9s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  92%,
+  100% {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  95%,
+  97% {
+    opacity: 1;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lid path {
+    animation: none;
+  }
+}

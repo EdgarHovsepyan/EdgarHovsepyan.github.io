@@ -21,7 +21,7 @@ export function SectionHeader({ index, label, title }: SectionHeaderProps) {
         {kickerText}
       </div>
       {title ? (
-        <h2 ref={headingRef} className={styles.heading}>
+        <h2 ref={headingRef} className={styles.heading} data-text={title}>
           {title}
         </h2>
       ) : null}

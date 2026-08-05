@@ -581,6 +581,54 @@ export function Skybox360() {
     avBurst.frustumCulled = false;
     scene.add(avBurst);
 
+    // Surreal set dressing around the character's stage: glowing halos stack
+    // like impossible crowns and small rocks levitate free of gravity —
+    // Magritte physics over the casino floor. Cheap: 3 toruses + 6 icosas.
+    const dreamGroup = new THREE.Group();
+    dreamGroup.position.copy(avBase);
+    scene.add(dreamGroup);
+    const haloGeo = new THREE.TorusGeometry(0.9, 0.012, 8, 64);
+    const haloGold = new THREE.MeshBasicMaterial({
+      color: 0xe5c07b,
+      transparent: true,
+      opacity: 0.32,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const haloCyan = new THREE.MeshBasicMaterial({
+      color: 0x22d3ee,
+      transparent: true,
+      opacity: 0.26,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const halos: THREE.Mesh[] = [];
+    for (let i = 0; i < 3; i++) {
+      const h = new THREE.Mesh(haloGeo, i === 1 ? haloCyan : haloGold);
+      h.position.y = 0.55 + i * 0.95;
+      h.rotation.x = Math.PI / 2 + (i - 1) * 0.3;
+      h.scale.setScalar(1 + i * 0.4);
+      halos.push(h);
+      dreamGroup.add(h);
+    }
+    const rockGeo = new THREE.IcosahedronGeometry(0.07, 0);
+    const rockMat = new THREE.MeshStandardMaterial({
+      color: 0x39405e,
+      roughness: 0.55,
+      metalness: 0.35,
+    });
+    const rocks: THREE.Mesh[] = [];
+    for (let i = 0; i < 6; i++) {
+      const r = new THREE.Mesh(rockGeo, rockMat);
+      const a = (i / 6) * Math.PI * 2;
+      const rad = 1.1 + (i % 3) * 0.45;
+      r.position.set(Math.cos(a) * rad, 0.35 + (i % 4) * 0.5, Math.sin(a) * rad);
+      r.rotation.set(i, i * 1.7, i * 0.6);
+      r.scale.setScalar(0.7 + (i % 3) * 0.45);
+      rocks.push(r);
+      dreamGroup.add(r);
+    }
+
     void (async () => {
       try {
         const [gltf, flipClip] = await Promise.all([loadAvatarModel(), loadFlipClip()]);
@@ -796,6 +844,23 @@ export function Skybox360() {
       // particles: rotate faster than the camera for depth
       points.rotation.y = yaw * 0.35 + time * 0.01;
 
+      // Surreal set dressing lives its own slow dream: halos spin and bob,
+      // rocks tumble weightlessly, and the whole set leans in while he
+      // performs (dwell), exhaling back out as the pan releases.
+      dreamGroup.rotation.y = time * 0.07;
+      dreamGroup.scale.setScalar(1 - dwell * 0.12);
+      for (let i = 0; i < halos.length; i++) {
+        const h = halos[i]!;
+        h.rotation.z = time * (0.1 + i * 0.05);
+        h.position.y = 0.55 + i * 0.95 + Math.sin(time * 0.6 + i * 2.1) * 0.08;
+      }
+      for (let i = 0; i < rocks.length; i++) {
+        const r = rocks[i]!;
+        r.position.y = 0.35 + (i % 4) * 0.5 + Math.sin(time * 0.5 + i * 1.7) * 0.11;
+        r.rotation.x += 0.0035;
+        r.rotation.y += 0.002;
+      }
+
       // The character's two-act cinematic, scrubbed by the journey:
       // 10–40% superhero landing (falls out of the sky as the pan finds him),
       // then a WEIGHTED CROSSFADE (44–56%) morphs the hero pose bone-by-bone
@@ -951,6 +1016,11 @@ export function Skybox360() {
         ringMat.dispose();
         abGeo.dispose();
         abMat.dispose();
+        haloGeo.dispose();
+        haloGold.dispose();
+        haloCyan.dispose();
+        rockGeo.dispose();
+        rockMat.dispose();
         ptsGeo.dispose();
         ptsMat.dispose();
         nameMat.dispose();

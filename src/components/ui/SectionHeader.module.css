@@ -7,6 +7,7 @@
 }
 
 .heading {
+  position: relative;
   margin-top: 16px;
   font-family: var(--font-cond);
   font-size: clamp(44px, 7vw, 104px);
@@ -15,3 +16,25 @@
   line-height: 0.9;
   text-transform: uppercase;
 }
+
+/* Surreal dream reflection: every title mirrors upside-down beneath itself,
+   fading like a reflection in still dream-water. Pure CSS, no layout cost. */
+.heading::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 100%;
+  transform: scaleY(-1) translateY(-4px);
+  transform-origin: top;
+  opacity: 0.1;
+  background: linear-gradient(0deg, var(--text) 10%, transparent 75%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: blur(1px);
+  pointer-events: none;
+  user-select: none;
+}
+
