@@ -1,5 +1,7 @@
 /* Dream objects floating above the whole site — transform/opacity only,
-   blurred and blended so they read as atmosphere, never as UI. */
+   blurred and blended so they read as atmosphere, never as UI.
+   The wrappers carry the JS interaction physics (repel / leash / pop);
+   the inner objects keep their ambient CSS drift + scroll parallax. */
 .layer {
   position: fixed;
   inset: 0;
@@ -12,36 +14,95 @@
   position: absolute;
 }
 
+.wrap {
+  position: absolute;
+  will-change: transform;
+}
+
+.orbWrap {
+  top: 20%;
+  left: 78%;
+}
+
+.ringWrap {
+  top: 64%;
+  left: 10%;
+}
+
 .obj {
   position: absolute;
   will-change: transform;
   mix-blend-mode: screen;
 }
 
-/* A glowing dream orb — a small moon that ignores gravity. */
+/* The dream bubble — an iridescent soap-moon that fears the cursor. */
 .orb {
-  top: 18%;
-  left: 78%;
   width: 90px;
   height: 90px;
+  margin: -45px 0 0 -45px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 34% 30%,
-    rgba(200, 220, 255, 0.5),
-    rgba(124, 158, 255, 0.16) 45%,
-    transparent 70%
-  );
-  filter: blur(2px);
-  animation: drift-a 26s ease-in-out infinite;
+  background:
+    radial-gradient(
+      circle at 34% 30%,
+      rgba(200, 220, 255, 0.55),
+      rgba(124, 158, 255, 0.16) 45%,
+      transparent 70%
+    ),
+    conic-gradient(
+      from 40deg,
+      transparent 0deg,
+      rgba(34, 211, 238, 0.12) 80deg,
+      transparent 140deg,
+      rgba(229, 192, 123, 0.12) 240deg,
+      transparent 320deg
+    );
+  border: 1px solid rgba(200, 220, 255, 0.14);
+  filter: blur(1px);
+  animation:
+    drift-a 26s ease-in-out infinite,
+    sheen 11s linear infinite;
   transform: translateY(calc(var(--scroll, 0) * -14vh));
 }
 
-/* A thin levitating ring, tilted like a halo mid-fall. */
+/* Caught! The bubble bursts and is gone until it reforms elsewhere. */
+.popped .orb {
+  animation: bubblePop 1.6s ease-out forwards;
+}
+
+@keyframes bubblePop {
+  0% {
+    scale: 1;
+    opacity: 1;
+  }
+  10% {
+    scale: 1.45;
+    opacity: 0.85;
+  }
+  16% {
+    scale: 1.7;
+    opacity: 0;
+  }
+  86% {
+    scale: 0.2;
+    opacity: 0;
+  }
+  100% {
+    scale: 1;
+    opacity: 0.9;
+  }
+}
+
+@keyframes sheen {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* A thin levitating halo, tilted mid-fall — leans toward the visitor. */
 .ring {
-  top: 62%;
-  left: 8%;
   width: 150px;
   height: 150px;
+  margin: -75px 0 0 -75px;
   border-radius: 50%;
   border: 1px solid rgba(229, 192, 123, 0.34);
   box-shadow:
@@ -52,7 +113,7 @@
   transform: rotateX(64deg) translateY(calc(var(--scroll, 0) * 18vh));
 }
 
-/* An inverted monolith — the impossible standing stone. */
+/* An inverted monolith — the impossible standing stone. Indifferent. */
 .monolith {
   top: 34%;
   left: 30%;
@@ -72,7 +133,7 @@
     opacity: 0.75;
   }
   50% {
-    translate: -5vw 6vh;
+    translate: -3vw 4vh;
     opacity: 1;
   }
 }
@@ -83,7 +144,7 @@
     translate: 0 0;
   }
   50% {
-    translate: 6vw -8vh;
+    translate: 4vw -6vh;
   }
 }
 
@@ -107,6 +168,7 @@
   .orb {
     width: 60px;
     height: 60px;
+    margin: -30px 0 0 -30px;
   }
 }
 
