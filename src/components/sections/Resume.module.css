@@ -140,3 +140,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Perf: skip layout/paint for this section until it nears the viewport. */
+.section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
