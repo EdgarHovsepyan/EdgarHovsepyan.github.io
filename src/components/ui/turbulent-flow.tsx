@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react';
-import type * as THREE from 'three';
 import { gsap } from 'gsap';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cx } from '@/utils/cx';
 import styles from './turbulent-flow.module.css';
 
+// Raw WebGL — no three.js. The background is one fullscreen triangle and a
+// fragment program; hand-rolling the ~40 lines of GL plumbing removes the
+// entire 190KB-gzip three chunk from the site.
 const vertexShader = `
+  attribute vec2 a_pos;
   varying vec2 vUv;
   void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vUv = a_pos * 0.5 + 0.5;
+    gl_Position = vec4(a_pos, 0.0, 1.0);
   }
 `;
 
@@ -115,6 +118,17 @@ interface TurbulentFlowProps {
   maxDpr?: number;
 }
 
+const UNIFORM_NAMES = [
+  'u_time',
+  'u_resolution',
+  'u_mouse',
+  'u_noise_scale',
+  'u_distortion',
+  'u_turbulence',
+  'u_sharpness',
+  'u_vel',
+] as const;
+
 export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -124,85 +138,99 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     if (!mount) return;
 
     // Device tier: fewer march steps + lower internal resolution on phones and
-    // low-core machines, so the volumetric shader stays smooth everywhere.
+    // low-core machines, so the volumetric shader stays smooth everywhere. The
+    // CSS aurora paints instantly underneath while the program compiles.
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     const mobile = coarse || window.innerWidth < 820;
     const cores = navigator.hardwareConcurrency || 8;
-
-    // Quality tier: the raymarch runs everywhere, but phones use far fewer steps,
-    // a lower internal resolution and a ~30fps cap so it stays smooth. The CSS
-    // aurora paints instantly underneath while three.js + this shader load.
     const steps = mobile ? 12 : cores <= 4 ? 24 : 34;
     const renderScale = mobile ? 0.5 : 0.62;
     const minFrameMs = mobile ? 33 : 16;
-    const fragmentShader = `#define STEPS ${steps}\n${fragmentBody}`;
 
-    // Load three.js on demand (desktop only) so it never ships to phones, which
-    // returned above. Vite splits import('three') into its own chunk.
-    let disposed = false;
-    let cleanup: (() => void) | undefined;
-    void import('three').then((THREE) => {
-      if (disposed || !mountRef.current) return;
+    const canvas = document.createElement('canvas');
+    const gl = (canvas.getContext('webgl', {
+      alpha: true,
+      antialias: false,
+      depth: false,
+      stencil: false,
+      powerPreference: 'high-performance',
+    }) ?? undefined) as WebGLRenderingContext | undefined;
+    if (!gl) return; // no WebGL — the veil + page background stay
 
-      let renderer: THREE.WebGLRenderer;
-      try {
-        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
-      } catch {
-        return; // no WebGL — the veil + page background stay
-      }
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const compile = (type: number, src: string) => {
+      const sh = gl.createShader(type)!;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      return sh;
+    };
+    const program = gl.createProgram()!;
+    gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexShader));
+    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, `#define STEPS ${steps}\n${fragmentBody}`));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+    gl.useProgram(program);
 
-    const sizeOf = () => [mount.clientWidth || 1, mount.clientHeight || 1] as const;
-    const [initialWidth, initialHeight] = sizeOf();
+    // One fullscreen triangle — fewer helper invocations than a quad.
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const aPos = gl.getAttribLocation(program, 'a_pos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    const loc = {} as Record<(typeof UNIFORM_NAMES)[number], WebGLUniformLocation | null>;
+    for (const name of UNIFORM_NAMES) loc[name] = gl.getUniformLocation(program, name);
+
+    // GSAP animates these plain {value} holders exactly as it did the three
+    // uniforms; the tick uploads them each frame.
+    const u = {
+      noiseScale: { value: 4.0 },
+      distortion: { value: 0.15 },
+      turbulence: { value: 0.8 },
+      sharpness: { value: 1.4 },
+    };
+
+    canvas.className = styles.canvas ?? '';
+    mount.appendChild(canvas);
 
     const pixelRatio = () => Math.min(window.devicePixelRatio, maxDpr) * renderScale;
-    renderer.setPixelRatio(pixelRatio());
-    renderer.setSize(initialWidth, initialHeight);
-    mount.appendChild(renderer.domElement);
-
-    const material = new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: {
-        u_time: { value: 0 },
-        u_resolution: { value: new THREE.Vector2(initialWidth, initialHeight) },
-        u_mouse: { value: new THREE.Vector2(0, 0) },
-        u_noise_scale: { value: 4.0 },
-        u_distortion: { value: 0.15 },
-        u_turbulence: { value: 0.8 },
-        u_sharpness: { value: 1.4 },
-        u_vel: { value: 0 },
-      },
-    });
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-
     const resize = () => {
-      const [width, height] = sizeOf();
-      renderer.setPixelRatio(pixelRatio());
-      renderer.setSize(width, height);
-      material.uniforms.u_resolution.value.set(width * pixelRatio(), height * pixelRatio());
-      renderer.render(scene, camera);
+      const w = mount.clientWidth || 1;
+      const h = mount.clientHeight || 1;
+      const pr = pixelRatio();
+      canvas.width = Math.max(1, Math.round(w * pr));
+      canvas.height = Math.max(1, Math.round(h * pr));
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(loc.u_resolution, canvas.width, canvas.height);
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(mount);
-    material.uniforms.u_resolution.value.set(initialWidth * pixelRatio(), initialHeight * pixelRatio());
+    resize();
+
+    const draw = () => {
+      gl.uniform1f(loc.u_noise_scale, u.noiseScale.value);
+      gl.uniform1f(loc.u_distortion, u.distortion.value);
+      gl.uniform1f(loc.u_turbulence, u.turbulence.value);
+      gl.uniform1f(loc.u_sharpness, u.sharpness.value);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
 
     const dispose = () => {
       resizeObserver.disconnect();
-      renderer.domElement.remove();
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
+      gl.deleteBuffer(buf);
+      gl.deleteProgram(program);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      canvas.remove();
     };
 
     if (reduced) {
-      material.uniforms.u_time.value = 12;
-      renderer.render(scene, camera);
-      cleanup = dispose;
-      return;
+      gl.uniform1f(loc.u_time, 12);
+      gl.uniform2f(loc.u_mouse, 0, 0);
+      gl.uniform1f(loc.u_vel, 0);
+      draw();
+      return dispose;
     }
 
     let time = 0;
@@ -235,23 +263,23 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
       time += 0.008 * (minFrameMs / 16.67) * (1 + vel * 2.2);
       mx += (tmx - mx) * 0.06;
       my += (tmy - my) * 0.06;
-      material.uniforms.u_time.value = time;
-      material.uniforms.u_mouse.value.set(mx, my);
-      material.uniforms.u_vel.value = vel;
-      renderer.render(scene, camera);
+      gl.uniform1f(loc.u_time, time);
+      gl.uniform2f(loc.u_mouse, mx, my);
+      gl.uniform1f(loc.u_vel, vel);
+      draw();
     };
 
     // GSAP "breathing" — slow drift of the field parameters.
     const timeline = gsap.timeline({ repeat: -1 });
     timeline
-      .to(material.uniforms.u_turbulence, { value: 1.2, duration: 6, ease: 'sine.inOut' })
-      .to(material.uniforms.u_noise_scale, { value: 6.0, duration: 8, ease: 'power2.inOut' }, 0)
-      .to(material.uniforms.u_distortion, { value: 0.24, duration: 7, ease: 'power1.inOut' }, 1)
-      .to(material.uniforms.u_sharpness, { value: 1.8, duration: 5, ease: 'power2.inOut' }, 2)
-      .to(material.uniforms.u_turbulence, { value: 0.5, duration: 9, ease: 'sine.inOut' })
-      .to(material.uniforms.u_noise_scale, { value: 2.8, duration: 10, ease: 'power2.inOut' }, '-=4')
-      .to(material.uniforms.u_distortion, { value: 0.1, duration: 8, ease: 'power1.inOut' }, '-=6')
-      .to(material.uniforms.u_sharpness, { value: 1.0, duration: 7, ease: 'power2.inOut' }, '-=5');
+      .to(u.turbulence, { value: 1.2, duration: 6, ease: 'sine.inOut' })
+      .to(u.noiseScale, { value: 6.0, duration: 8, ease: 'power2.inOut' }, 0)
+      .to(u.distortion, { value: 0.24, duration: 7, ease: 'power1.inOut' }, 1)
+      .to(u.sharpness, { value: 1.8, duration: 5, ease: 'power2.inOut' }, 2)
+      .to(u.turbulence, { value: 0.5, duration: 9, ease: 'sine.inOut' })
+      .to(u.noiseScale, { value: 2.8, duration: 10, ease: 'power2.inOut' }, '-=4')
+      .to(u.distortion, { value: 0.1, duration: 8, ease: 'power1.inOut' }, '-=6')
+      .to(u.sharpness, { value: 1.0, duration: 7, ease: 'power2.inOut' }, '-=5');
 
     const onMouseMove = (event: MouseEvent) => {
       tmx = event.clientX / window.innerWidth - 0.5;
@@ -271,18 +299,12 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     timeline.play();
     frameId = requestAnimationFrame(tick);
 
-      cleanup = () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('scroll', onScroll);
-        cancelAnimationFrame(frameId);
-        timeline.kill();
-        dispose();
-      };
-    });
-
     return () => {
-      disposed = true;
-      cleanup?.();
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frameId);
+      timeline.kill();
+      dispose();
     };
   }, [reduced, maxDpr]);
 

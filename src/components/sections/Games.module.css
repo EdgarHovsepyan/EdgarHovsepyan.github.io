@@ -285,3 +285,10 @@
     filter: saturate(1.25) hue-rotate(-14deg) brightness(1.08);
   }
 }
+
+
+/* Perf: skip layout/paint for this section until it nears the viewport. */
+.section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}

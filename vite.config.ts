@@ -13,13 +13,9 @@ export default defineConfig({
     },
   },
   build: {
-    // three.js alone is ~500 kB; it already lives in its own chunk, so lift the
-    // warning threshold to keep the CI build log clean.
-    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks: {
-          three: ['three'],
           gsap: ['gsap'],
         },
       },

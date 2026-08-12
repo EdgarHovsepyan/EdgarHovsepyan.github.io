@@ -14,6 +14,6 @@ export const profile = {
   linkedin: 'https://www.linkedin.com/in/edgar-hovsepyan-03044117b',
   telegram: 'https://t.me/Dev_context',
   cv: '/Edgar_Hovsepyan_CV.pdf',
-  portrait: '/assets/portrait.png',
+  portrait: '/assets/portrait.webp',
   wordmark: '/assets/wordmark.png',
 } as const;
