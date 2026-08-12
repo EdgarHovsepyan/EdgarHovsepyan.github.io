@@ -2,6 +2,7 @@ import { profile } from '../../data/profile.ts';
 import { useMagnetic } from '../../hooks/useMagnetic.ts';
 import { useScramble } from '../../hooks/useScramble.ts';
 import { useScrollProgress } from '../../hooks/useScrollProgress.ts';
+import { SkillCycler } from '../ui/SkillCycler.tsx';
 import styles from './Hero.module.css';
 
 export function Hero() {
@@ -60,6 +61,12 @@ export function Hero() {
               TypeScript · PixiJS · Three.js · WebGL/WebGPU ·{' '}
               <span className={styles.ai}>AI-assisted pipelines</span>
             </p>
+          </div>
+        </div>
+
+        <div className={styles.line}>
+          <div className={styles.lineIn}>
+            <SkillCycler />
           </div>
         </div>
 

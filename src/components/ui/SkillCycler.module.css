@@ -1,0 +1,53 @@
+.row {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The mask: a clipped inline box exactly one line tall — words roll
+   through it vertically, nothing else on the line ever moves. */
+.mask {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  height: 1.25em;
+}
+
+.word {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  color: var(--gold);
+  opacity: 0;
+  transform: translateY(115%);
+}
+
+/* enter: rise into the mask on an expo ease-out — fast arrival, soft stop */
+.word.in {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    transform 0.56s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s ease-out;
+}
+
+/* exit: continue upward out of the mask, slightly quicker than the entry */
+.word.out {
+  opacity: 0;
+  transform: translateY(-115%);
+  transition:
+    transform 0.48s cubic-bezier(0.7, 0, 0.84, 0),
+    opacity 0.34s ease-in;
+}
+
+/* invisible widest word keeps the mask's width/height stable — zero reflow */
+.ghost {
+  visibility: hidden;
+  white-space: nowrap;
+  display: inline-block;
+}
