@@ -151,6 +151,18 @@ function dieMaterials() {
   });
 }
 
+/** Award cup cross-section: foot, stem with a knop, flared bowl, and the
+ *  inside wall so the rim has thickness. */
+const TROPHY_PROFILE = [
+  [0, -0.5], [0.25, -0.5], [0.26, -0.465], [0.21, -0.44], [0.1, -0.38], [0.055, -0.24],
+  [0.05, -0.17], [0.095, -0.13], [0.05, -0.09], [0.06, -0.04], [0.19, 0.06], [0.29, 0.2],
+  [0.335, 0.38], [0.35, 0.5], [0.325, 0.5], [0.305, 0.38], [0.262, 0.22], [0.17, 0.09], [0, 0.05],
+].map(([x, y]) => new Vector2(x, y));
+
+const PLINTH_PROFILE = [
+  [0, -0.68], [0.3, -0.68], [0.31, -0.66], [0.31, -0.54], [0.28, -0.5], [0, -0.5],
+].map(([x, y]) => new Vector2(x, y));
+
 /** The revolved coin, re-mapped so a flat drawing lands on each face. */
 function coinGeometry() {
   const lathe = new LatheGeometry(COIN_PROFILE, 96);
@@ -449,6 +461,9 @@ export function createGateScene(
   const geometry = {
     die: new RoundedBoxGeometry(0.8, 0.8, 0.8, 5, 0.13),
     coin: coinGeometry(),
+    trophy: new LatheGeometry(TROPHY_PROFILE, 80),
+    plinth: new LatheGeometry(PLINTH_PROFILE, 64),
+    handle: new TorusGeometry(0.15, 0.02, 14, 48, Math.PI * 1.15),
     knot: new TorusKnotGeometry(0.34, 0.115, 180, 28),
     gem: new OctahedronGeometry(0.5, 0),
     orb: new SphereGeometry(0.42, 48, 32),
@@ -511,6 +526,13 @@ export function createGateScene(
         roughness: 0.24,
       });
     })(),
+    trophy: new MeshPhysicalMaterial({
+      color: "#e6c070",
+      metalness: 1,
+      roughness: 0.13,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.2,
+    }),
     obsidian: new MeshPhysicalMaterial({
       color: "#0a0c14",
       metalness: 0.35,
@@ -634,7 +656,23 @@ export function createGateScene(
   const knight = sculpt('knight', material.obsidian, 1.25);
   const king = sculpt('king', material.gold, 1.45);
   const queen = sculpt('queen', material.chrome, 1.4);
-  const goblet = sculpt('goblet', material.gold, 1.25);
+  // The trophy: a two-handled cup on an obsidian plinth, turned on the lathe
+  // rather than loaded, so the silhouette is ours.
+  const goblet = (): Object3D => {
+    const group = new Group();
+    group.add(new Mesh(geometry.trophy, material.trophy));
+    group.add(new Mesh(geometry.plinth, material.obsidian));
+    for (const side of [1, -1]) {
+      const handle = new Mesh(geometry.handle, material.trophy);
+      handle.position.set(side * 0.33, 0.28, 0);
+      handle.rotation.z = side > 0 ? -Math.PI * 0.62 : Math.PI * 0.47;
+      group.add(handle);
+    }
+    group.scale.setScalar(1.25);
+    const wrapper = new Group();
+    wrapper.add(group);
+    return wrapper;
+  };
 
   // The corridor plays one round, over and over: the deal, the roll, the
   // thinking, the win, and then the machinery that makes it fair. Each stretch

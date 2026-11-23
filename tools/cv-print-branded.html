@@ -47,55 +47,53 @@
 
   <div class="hd">
     <div class="name">Edgar <span>Hovsepyan</span></div>
-    <div class="title">Senior Game Developer (Web · 2D/3D) · TypeScript · PixiJS v8 · Three.js · WebGL/WebGPU</div>
-    <div class="contact">Yerevan, Armenia — Remote (worldwide) or on-site · +374 94 276 656 · <a href="mailto:edgarhovsepyan94@gmail.com">edgarhovsepyan94@gmail.com</a></div>
+    <div class="title">Senior iGaming Engineer · Games, Platform and Tooling · PixiJS / Three.js · TypeScript · C#/.NET · Kubernetes</div>
+    <div class="contact">Yerevan, Armenia. Remote worldwide or on site · +374 94 276 656 · <a href="mailto:edgarhovsepyan94@gmail.com">edgarhovsepyan94@gmail.com</a></div>
     <div class="contact"><a href="https://www.linkedin.com/in/edgar-hovsepyan-03044117b">linkedin.com/in/edgar-hovsepyan-03044117b</a> · <a href="https://github.com/EdgarHovsepyan">github.com/EdgarHovsepyan</a> · <a href="https://t.me/Dev_context">t.me/Dev_context</a> · <a href="https://edgarhovsepyan.github.io">edgarhovsepyan.github.io</a></div>
   </div>
 
   <h2>Summary</h2>
-  <p class="summary">I build real-time games for the web. In seven years I have shipped 50+ casino titles end to end at Pascal Gaming (BetConstruct) and Extra Studio, from 2D slots and physics games to live and 3D roulette, on PixiJS, Three.js and custom WebGL/WebGPU pipelines. Before that I spent four years at a metaverse platform leading 10 Unity developers within a cross-functional front-end, back-end and QA team, building VR/AR/WebXR worlds. I care about the hard parts: deterministic physics that lands exactly on the server-decided outcome, 120 fps win ceremonies on mid-tier phones, and code that survives a regulated industry's certification review.</p>
+  <p class="summary">I build casino games and the services they run on. At RedCore (RC Games) I ship games (Plinko, Dice, Mines) and the platform under them: a standalone RNG service with verifiable fairness, bet history on ClickHouse, Keycloak-based auth and GitOps delivery on Kubernetes across dev, preprod and prod. Before that I spent seven years shipping 50+ casino titles in PixiJS, Three.js and WebGL, and four years leading a 10-person Unity team. I work test-first and leave teams with docs and reusable AI agent skills.</p>
 
   <h2>Professional Experience</h2>
 
   <div class="role">
-    <div class="roleHead"><span class="roleTitle">Senior Game Developer</span><span class="roleDates">Mar 2024 – Present</span></div>
-    <p class="org">Pascal Gaming / BetConstruct — Yerevan (hybrid)</p>
+    <div class="roleHead"><span class="roleTitle">Senior Software Engineer, Game Platform</span><span class="roleDates">Aug 2026 – Present</span></div>
+    <p class="org">RedCore (RC Games), RC Research team · Yerevan</p>
     <ul>
-      <li>Own and ship Pascal Gaming's full casino catalogue full-cycle in PixiJS v8 / TypeScript across 14+ game verticals — slots (free spins, bonus rounds, cluster-pays, cascading symbols, expanding wilds, multiplier math), live &amp; 3D roulette, blackjack, baccarat, Hi-Lo, crash, Plinko, Mines, poker and Deal-or-No-Deal.</li>
-      <li>Co-developed <b>Non-Stop Roulette</b> as part of the game team — <b>SBC Awards Americas 2025 Game of the Year shortlist</b> (certified across Colombia, Peru &amp; Brazil).</li>
-      <li>Architected the studio's Spine + particle VFX web editor, used daily by 15 people across the 21-animator art team, and built an AI animation-benchmark / QA tool that flags off-spec animations before integration.</li>
-      <li>Built and own the team's Claude Code + MCP build pipeline (asset packing, atlas generation, prototyping); mentor mid- and junior developers.</li>
-      <li>Optimized win-ceremony rendering to a sustained 120 fps on mid-tier mobile via draw-call batching, GPU instancing and zero-GC object pooling.</li>
+      <li>Built a standalone <b>random-number service</b> for real-money games from design to production: token-verified API, version-pinned algorithm with golden-vector parity, no partial results under overload, a CI performance gate, soak tests and deploy smoke checks on every environment.</li>
+      <li>Delivered the <b>Plinko</b> game with the team: tech design and test plan, provably fair round verification by round ID, checksummed configurations, ball paths drawn from the RNG service. Also Dice (assets to gated deploy) and the autoplay epic for Mines.</li>
+      <li>Set up bet history on ClickHouse, greenfield Keycloak on dev, preprod and prod, and Helm chart templates promoted with Argo CD; drove the migration of three games off a legacy platform, DNS cutover included.</li>
+      <li>Tightened delivery for the group: merge trains on every repository, canary and rollback with smoke checks on prod, promotion blocked on failed gates. Wrote the engineering handbook and a shared library of AI agent skills with security scanning in CI.</li>
     </ul>
-    <p class="shipped"><b>Playable demos:</b>
-      <a href="https://pg.pascalgaming.com/launch?gameId=232&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Flaming Heart</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=124&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Golden Tree</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=314&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Sugar Balloon</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=268&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Franken Alive</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=273&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Juicy Storm</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=282&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Super Blaize</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=186&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Multiplier Blackjack</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=999&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Bet on Poker</a>,
-      <a href="https://pg.pascalgaming.com/launch?gameId=190&mode=fun&culture=en&token=token_155&partnerKey=9b0b0a92-f1a0-48e7-8fab-71b243140207">Mega Plinko</a>.
-    </p>
+  </div>
+
+  <div class="role">
+    <div class="roleHead"><span class="roleTitle">Senior Game Developer</span><span class="roleDates">Mar 2024 – Aug 2026</span></div>
+    <p class="org">Pascal Gaming / BetConstruct · Yerevan</p>
+    <ul>
+      <li>Shipped the casino catalogue full cycle in PixiJS v8 / TypeScript across 14+ game verticals: slots (free spins, bonus rounds, cluster pays, cascades, expanding wilds), live &amp; 3D roulette, blackjack, baccarat, Hi-Lo, crash, Plinko, Mines, poker and Deal-or-No-Deal.</li>
+      <li>Co-developed <b>Non-Stop Roulette</b> as part of the game team: <b>SBC Awards Americas 2025 Game of the Year shortlist</b> (certified in Colombia, Peru &amp; Brazil).</li>
+      <li>Built the studio's Spine + particle VFX web editor, used daily by 15 people on the 21-animator art team, and an AI animation-benchmark / QA tool.</li>
+      <li>Built and ran the Claude Code + MCP build pipeline; held win ceremonies at 120 fps on mid-tier mobile; mentored mid and junior developers.</li>
+    </ul>
+    <p class="shipped"><b>Playable demos on the portfolio:</b> Flaming Heart, Golden Tree, Sugar Balloon, Franken Alive, Juicy Storm, Super Blaize, Multiplier Blackjack, Bet on Poker, Mega Plinko.</p>
   </div>
 
   <div class="role">
     <div class="roleHead"><span class="roleTitle">Team Lead / Metaverse Platform Engineer</span><span class="roleDates">2020 – Mar 2024</span></div>
     <p class="org">Fastexverse / PandaMR</p>
     <ul>
-      <li>Joined at prototype as a founding engineer and team lead; scaled a metaverse-aggregator platform to production leading 10 Unity developers plus front-end, back-end and QA.</li>
-      <li>Shipped live in-world events &amp; ticketing, immersive 3D worlds (VR / AR / WebXR), in-world casino / iGaming brand integrations, and wallet / on-chain payments.</li>
-      <li>Introduced and led adoption of the team's first AI tooling.</li>
+      <li>Joined at prototype as founding engineer and team lead; took a metaverse aggregator to production leading 10 Unity developers plus front-end, back-end and QA.</li>
+      <li>Shipped live in-world events &amp; ticketing, 3D worlds for VR / AR / WebXR, in-world casino integrations, and wallet / on-chain payments.</li>
     </ul>
   </div>
 
   <div class="role">
     <div class="roleHead"><span class="roleTitle">Game Developer (Freelance)</span><span class="roleDates">2019 – 2023</span></div>
-    <p class="org">Extra Studio LLC — freelance, alongside the Fastexverse role</p>
+    <p class="org">Extra Studio LLC · alongside the Fastexverse role</p>
     <ul>
-      <li>Built mini-games, mini table games and playable ads — the studio's highest-volume output line — from concept to art integration.</li>
-      <li>Optimised gameplay in Three.js and PlayCanvas for desktop and mobile; mentored junior developers.</li>
+      <li>Built mini games, mini table games and playable ads, the studio's highest-volume line, in Three.js and PlayCanvas; mentored junior developers.</li>
     </ul>
   </div>
 
@@ -103,35 +101,34 @@
     <div class="role">
       <div class="roleHead"><span class="roleTitle">Three.js Developer</span><span class="roleDates">2018 – 2019</span></div>
       <p class="org">Arakssys</p>
-      <ul><li>Built virtual rooms and computer-vision measurement for apartment renovation in Three.js + React; tuned rendering accuracy and cross-browser performance.</li></ul>
+      <ul><li>Virtual rooms and computer-vision measurement for apartment renovation in Three.js + React.</li></ul>
     </div>
     <div class="role">
       <div class="roleHead"><span class="roleTitle">Front-End Developer</span><span class="roleDates">2017 – 2018</span></div>
       <p class="org">WebApricot</p>
-      <ul><li>Delivered responsive cross-browser pages and early Three.js / WebGL builds — the start of the custom-shader practice.</li></ul>
+      <ul><li>Responsive cross-browser pages and early Three.js / WebGL builds.</li></ul>
     </div>
   </div>
 
   <h2>Selected Projects</h2>
   <ul class="compact">
-    <li><b>Interactive 3D portfolio</b> — edgarhovsepyan.github.io — Three.js / WebGL site with a raymarched volumetric GLSL shader background, a 360&deg; WebGL panorama and PixiJS game demos; device-tiered, structured-data SEO.</li>
-    <li><b>Spine + particle VFX web editor</b> — in-house authoring tool / viewer for the art team, plus an AI animation-benchmark / QA tool.</li>
-    <li><b>Claude Code + MCP skill library</b> — large internal Claude Code skills + MCP toolchain automating asset packing, atlas generation and prototyping.</li>
-    <li><b>WhatsApp AI sales agent</b> — production RAG / Pinecone vector-search agent. &nbsp;·&nbsp; <b>Indie slot studio on Stake Engine</b> — solo full-stack slots. &nbsp;·&nbsp; <b>EV-charging platform</b> — solo NestJS / OCPP build.</li>
+    <li><b>AI agents command center</b> (personal initiative): a twice-daily agent pipeline over GitLab, Jira, Slack, calendar and mail that builds a prioritized briefing, a searchable case memory and deterministic alerts.</li>
+    <li><b>Interactive 3D portfolio</b>, edgarhovsepyan.github.io: Three.js / WebGL site with a scroll-driven 3D corridor, a particle portrait and a raymarched GLSL background. &nbsp;·&nbsp; <b>SART Gallery</b> (personal build): English / Arabic art-gallery commerce in Next.js.</li>
+    <li><b>Side projects:</b> a WhatsApp AI sales agent (RAG, Pinecone), an indie slot studio on Stake Engine, an EV-charging platform on NestJS / OCPP.</li>
   </ul>
 
   <h2>Technical Skills</h2>
   <div class="skills">
-    <p><b>Core &amp; Slots:</b> PixiJS v7/v8, HTML5, TypeScript, JavaScript, slot engines, RTP / paytable, win-ceremony, game-feel, state machines</p>
-    <p><b>Rendering &amp; FX:</b> WebGPU, WGSL / GLSL shaders, GPU instancing, draw-call batching, Spine, particles, Matter.js, Rapier, Cannon / Ammo</p>
-    <p><b>Engines &amp; 3D:</b> Three.js / WebGL, Babylon.js, PlayCanvas, Cocos Creator, Unity (team-lead level) &nbsp;|&nbsp; <b>AI:</b> Claude Code, MCP servers, agentic systems, RAG (Pinecone)</p>
-    <p><b>Architecture:</b> MobX, Redux, RxJS, SignalR / WebSockets, React &nbsp;|&nbsp; <b>Immersive &amp; Web3:</b> VR / AR, WebXR, Web3 / NFT, wallets, metaverse</p>
+    <p><b>Game Platform &amp; Backend:</b> C# / .NET services, RNG and provably fair design, idempotent bet and wallet flows, ClickHouse, PostgreSQL, Redis, SignalR, WebSockets</p>
+    <p><b>Cloud &amp; Delivery:</b> Kubernetes, Helm, Argo CD (GitOps), Terraform, AWS, Cloudflare, Keycloak (OIDC), Consul, GitLab CI &nbsp;|&nbsp; <b>Quality:</b> test-first, BDD / Gherkin, Playwright, load and soak tests</p>
+    <p><b>Front-End &amp; Rendering:</b> TypeScript, PixiJS v7/v8, Three.js, WebGL / WebGPU, GLSL / WGSL, Spine, 120 fps mobile targets &nbsp;|&nbsp; <b>AI:</b> Claude Code, agent skills, MCP, RAG (Pinecone)</p>
+    <p><b>Leadership:</b> led a 10-developer Unity team, mentoring, engineering documentation</p>
   </div>
 
   <h2>Education &amp; Awards</h2>
   <ul class="compact">
-    <li><b>Anthropic — AI Engineering:</b> Claude, MCP &amp; Agents (self-directed), 2024–2025 &nbsp;·&nbsp; <b>Polytechnic University of Armenia</b> — Electrical Energy, 2014–2018 &nbsp;·&nbsp; <b>TT-Soft &amp; LevelUp</b> — Web Programming, 2017–2018</li>
-    <li><b>Awards:</b> SBC Awards Americas 2025 — Game of the Year shortlist · Non-Stop Roulette, Pascal Gaming (team credit). &nbsp;·&nbsp; B.F.T.H. Arena Awards 2024 — Finalist. &nbsp;·&nbsp; <b>Languages:</b> English (professional working proficiency), Russian (full professional), Armenian (native).</li>
+    <li><b>Anthropic, AI Engineering:</b> Claude, MCP &amp; Agents (self-directed), 2024–2025 &nbsp;·&nbsp; <b>Polytechnic University of Armenia</b>, Electrical Energy, 2014–2018 &nbsp;·&nbsp; <b>TT-Soft &amp; LevelUp</b>, Web Programming, 2017–2018</li>
+    <li><b>Awards:</b> SBC Awards Americas 2025, Game of the Year shortlist, Non-Stop Roulette, Pascal Gaming (team credit). &nbsp;·&nbsp; B.F.T.H. Arena Awards 2024, Finalist. &nbsp;·&nbsp; <b>Languages:</b> English (professional working proficiency), Russian (full professional), Armenian (native).</li>
   </ul>
 
 </body>

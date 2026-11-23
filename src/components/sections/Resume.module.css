@@ -36,7 +36,7 @@
   --ink: #14151a;
   position: relative;
   flex: 0 0 auto;
-  width: clamp(210px, 21vw, 300px);
+  width: clamp(150px, 12.6vw, 196px);
   aspect-ratio: 210 / 297;
   display: flex;
   flex-direction: column;
@@ -56,19 +56,61 @@
 }
 
 .sheet:nth-child(1) {
-  transform: rotate(-6deg) translate(8%, 2%);
+  transform: rotate(-10deg) translateY(7%);
   z-index: 1;
 }
 
 .sheet:nth-child(2) {
-  transform: rotate(5deg) translate(-8%, 0);
+  transform: rotate(-3.5deg);
   z-index: 2;
+}
+
+.sheet:nth-child(3) {
+  transform: rotate(3.5deg);
+  z-index: 3;
+}
+
+.sheet:nth-child(4) {
+  transform: rotate(10deg) translateY(7%);
+  z-index: 4;
+}
+
+/* Sheets overlap like a hand of cards. */
+.sheet + .sheet {
+  margin-left: -26px;
+}
+
+/* The designed CV is a dark page; its sheet is too. */
+.dark {
+  --paper: #0c0d14;
+  --ink: #f0ede7;
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(159, 184, 255, 0.28);
+}
+
+.dark .sheetRole,
+.dark .blockLabel,
+.dark .note {
+  color: #9aa0b4;
+}
+
+.dark .lines {
+  background: repeating-linear-gradient(180deg, rgba(240, 237, 231, 0.24) 0 2px, transparent 2px 6px);
+}
+
+.dark .foot {
+  border-top-color: rgba(240, 237, 231, 0.2);
+}
+
+.dark .get {
+  color: #8fb0ff;
 }
 
 .sheet:hover,
 .sheet:focus-visible {
   transform: rotate(0deg) translateY(-22px) scale(1.04);
-  z-index: 3;
+  z-index: 6;
   box-shadow:
     0 50px 90px -24px rgba(0, 0, 0, 0.9),
     0 0 0 1px rgba(77, 124, 255, 0.5),
@@ -137,8 +179,8 @@
 
 .foot {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 10px;
+  grid-template-columns: 1fr;
+  gap: 5px;
   align-items: center;
   margin-top: 12px;
   padding-top: 10px;
@@ -146,13 +188,15 @@
 }
 
 .format {
-  grid-row: span 2;
-  padding: 6px 9px;
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 5px 8px;
   background: var(--ink);
   color: var(--paper);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 9.5px;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
   border-radius: 3px;
 }
 
@@ -238,7 +282,15 @@
   }
 
   .sheet {
-    width: min(44vw, 230px);
+    width: min(26vw, 150px);
+  }
+
+  .outline {
+    display: none;
+  }
+
+  .rule {
+    margin-bottom: auto;
   }
 
   .sheetRole,
