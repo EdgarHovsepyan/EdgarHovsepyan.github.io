@@ -249,6 +249,8 @@
   gap: 10px;
 }
 
+/* Phones and small tablets: a swipe carousel on native scroll snap. One panel
+   in focus with the next one peeking in, instead of seven stacked panels. */
 @media (max-width: 879px) {
   .viewport {
     min-height: 0;
@@ -256,17 +258,37 @@
     padding: clamp(60px, 10vw, 90px) 0;
   }
 
+  /* Room for the title's parallax drift, so it never slides over the counter. */
+  .header {
+    margin-bottom: 46px;
+  }
+
   .track {
-    flex-direction: column;
     width: auto;
-    gap: 18px;
+    gap: 12px;
+    padding: 6px var(--gutter) 10px;
+    overflow-x: auto;
+    /* mandatory, so the track always comes to rest on a panel */
+    scroll-snap-type: x mandatory;
+    /* only the scrolling axis: the page must still scroll vertically */
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: var(--gutter);
+    touch-action: manipulation;
+    scrollbar-width: none;
+    will-change: auto;
+  }
+
+  .track::-webkit-scrollbar {
+    display: none;
   }
 
   .panel {
+    flex: 0 0 84%;
     width: auto;
     height: auto;
-    min-height: 320px;
-    /* no cursor on touch — keep the card flat, art + portal still animate */
+    min-height: min(62vh, 460px);
+    scroll-snap-align: center;
+    /* no cursor on touch: keep the card flat, the focus pull does the work */
     transform: none;
   }
 
@@ -274,9 +296,105 @@
     filter: blur(4px);
     opacity: 0.6;
   }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 var(--gutter) 12px;
+  }
+
+  .count {
+    margin-right: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--text-muted-3);
+  }
+
+  .count b {
+    font-family: var(--font-cond);
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 0;
+    color: var(--text);
+  }
+
+  .arrow {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: rgba(10, 11, 18, 0.6);
+    color: var(--text);
+    font-size: 18px;
+    touch-action: manipulation;
+  }
+
+  .arrow:disabled {
+    color: var(--text-faint);
+    border-color: var(--line-soft);
+  }
+
+  .markers {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px var(--gutter) 0;
+  }
+
+  /* The dot is small, the target is not: 28px of button around a 6px mark. */
+  .marker {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    touch-action: manipulation;
+  }
+
+  .marker::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.4);
+    translate: -50% -50%;
+    transition:
+      width 0.35s var(--ease),
+      background-color 0.3s;
+  }
+
+  /* Current: longer as well as brighter, so it is not colour alone. */
+  .marker[aria-current='true']::before {
+    width: 22px;
+    background: var(--accent-blue-soft);
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (max-width: 879px) and (prefers-reduced-motion: no-preference) {
+  .track {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Visually hidden, still read by assistive technology. */
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 880px) and (prefers-reduced-motion: reduce) {
   .viewport {
     min-height: 0;
     overflow: visible;

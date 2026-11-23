@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chip } from '../ui/Chip.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { work } from '../../data/work.ts';
@@ -32,7 +32,15 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
   };
 
   return (
-    <article ref={ref} className={styles.panel} onPointerMove={onMove} onPointerLeave={onLeave}>
+    <article
+      ref={ref}
+      className={styles.panel}
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`${index + 1} of ${work.length}`}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
+    >
       <div className={styles.artBg} aria-hidden="true" />
       <div className={styles.portalWrap} aria-hidden="true">
         <div className={styles.portal} />
@@ -65,11 +73,115 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
 // a career row expanded). The slide itself is a native scroll-driven animation;
 // browsers without it get a rect-based scroll listener.
 const DESKTOP = '(min-width: 880px) and (prefers-reduced-motion: no-preference)';
+// Below this width the gallery is a swipe carousel on native scroll snap.
+const SWIPE = '(max-width: 879px)';
 
 export function Work() {
   const root = useRef<HTMLElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
+  const previous = useRef<HTMLButtonElement>(null);
+  const next = useRef<HTMLButtonElement>(null);
+  const [swipe, setSwipe] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [status, setStatus] = useState('');
+  // Where a button press is heading, so quick presses build on each other
+  // instead of on wherever the scroll happens to be mid-flight.
+  const pending = useRef<number | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia(SWIPE);
+    const sync = () => setSwipe(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  // Carousel wiring. Scrolling and snapping are the browser's; this only keeps
+  // the markers, the focus pull and the announcement in step with it.
+  useEffect(() => {
+    const trackEl = track.current;
+    if (!swipe || !trackEl) return;
+    const slides = Array.from(trackEl.children) as HTMLElement[];
+    let frame = 0;
+    let settled = 0;
+    let timer = 0;
+
+    const nearest = () => {
+      const centre = trackEl.scrollLeft + trackEl.clientWidth / 2;
+      let best = 0;
+      let bestGap = Infinity;
+      slides.forEach((slide, index) => {
+        const gap = Math.abs(slide.offsetLeft + slide.offsetWidth / 2 - centre);
+        if (gap < bestGap) {
+          bestGap = gap;
+          best = index;
+        }
+      });
+      return best;
+    };
+    const paint = () => {
+      frame = 0;
+      const centre = trackEl.scrollLeft + trackEl.clientWidth / 2;
+      for (const slide of slides) {
+        const offset = (slide.offsetLeft + slide.offsetWidth / 2 - centre) / trackEl.clientWidth;
+        const shift = Math.min(1, Math.max(-1, offset));
+        slide.style.setProperty('--shift', shift.toFixed(3));
+        slide.style.setProperty('--focus', (1 - Math.min(1, Math.abs(shift) * 1.15)).toFixed(3));
+      }
+      if (pending.current === null) setCurrent(nearest());
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(paint);
+    };
+    const settle = () => {
+      pending.current = null;
+      const index = nearest();
+      setCurrent(index);
+      if (index !== settled) {
+        settled = index;
+        setStatus(`Slide ${index + 1} of ${slides.length}: ${work[index]!.title}`);
+      }
+    };
+    const hasScrollEnd = 'onscrollend' in window;
+    const onScrollDebounced = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(settle, 140);
+    };
+
+    trackEl.addEventListener('scroll', onScroll, { passive: true });
+    if (hasScrollEnd) trackEl.addEventListener('scrollend', settle);
+    else trackEl.addEventListener('scroll', onScrollDebounced, { passive: true });
+    paint();
+
+    return () => {
+      trackEl.removeEventListener('scroll', onScroll);
+      trackEl.removeEventListener('scrollend', settle);
+      trackEl.removeEventListener('scroll', onScrollDebounced);
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      for (const slide of slides) {
+        slide.style.removeProperty('--shift');
+        slide.style.removeProperty('--focus');
+      }
+    };
+  }, [swipe]);
+
+  const goTo = (index: number) => {
+    const trackEl = track.current;
+    if (!trackEl) return;
+    const target = Math.min(work.length - 1, Math.max(0, index));
+    const slide = trackEl.children[target] as HTMLElement | undefined;
+    if (!slide) return;
+    pending.current = target;
+    setCurrent(target);
+    // Scroll the track only, to the slide's own snap position.
+    trackEl.scrollTo({ left: slide.offsetLeft - (trackEl.clientWidth - slide.offsetWidth) / 2 });
+    // A control that is about to disable must not strand keyboard focus.
+    if (target === 0 && document.activeElement === previous.current) next.current?.focus();
+    if (target === work.length - 1 && document.activeElement === next.current) previous.current?.focus();
+  };
+  const step = (direction: number) => goTo((pending.current ?? current) + direction);
 
   useEffect(() => {
     const rootEl = root.current;
@@ -87,9 +199,12 @@ export function Work() {
       frame = 0;
       if (!mq.matches) {
         rootEl.style.removeProperty('--p');
-        for (const panel of panels) {
-          panel.style.removeProperty('--shift');
-          panel.style.removeProperty('--focus');
+        // On phones the carousel effect owns --shift / --focus.
+        if (!window.matchMedia(SWIPE).matches) {
+          for (const panel of panels) {
+            panel.style.removeProperty('--shift');
+            panel.style.removeProperty('--focus');
+          }
         }
         if (!native) trackEl.style.removeProperty('translate');
         return;
@@ -136,7 +251,13 @@ export function Work() {
   }, []);
 
   return (
-    <section id="work" ref={root} className={styles.section}>
+    <section
+      id="work"
+      ref={root}
+      className={styles.section}
+      aria-roledescription="carousel"
+      aria-label="Things I built"
+    >
       <div ref={viewport} className={styles.viewport}>
         <div className={styles.header}>
           <SectionHeader index="03" label="Selected work" title="Things I built" />
@@ -146,11 +267,66 @@ export function Work() {
             <span className={styles.meterLabel}>{`0${work.length}`}</span>
           </div>
         </div>
-        <div ref={track} className={styles.track}>
+
+        {swipe ? (
+          <div className={styles.controls}>
+            <span className={styles.count} aria-hidden="true">
+              <b>{`0${current + 1}`}</b> / {`0${work.length}`}
+            </span>
+            <button
+              ref={previous}
+              type="button"
+              className={styles.arrow}
+              disabled={current === 0}
+              onClick={() => step(-1)}
+            >
+              <span aria-hidden="true">←</span>
+              <span className={styles.hidden}>Previous slide</span>
+            </button>
+            <button
+              ref={next}
+              type="button"
+              className={styles.arrow}
+              disabled={current === work.length - 1}
+              onClick={() => step(1)}
+            >
+              <span aria-hidden="true">→</span>
+              <span className={styles.hidden}>Next slide</span>
+            </button>
+          </div>
+        ) : null}
+
+        <div
+          ref={track}
+          className={styles.track}
+          role="group"
+          aria-label="Slides"
+          tabIndex={swipe ? 0 : undefined}
+        >
           {work.map((project, index) => (
             <WorkPanel key={project.id} project={project} index={index} />
           ))}
         </div>
+
+        {swipe ? (
+          <>
+            <p className={styles.hidden} role="status" aria-live="polite">
+              {status}
+            </p>
+            <nav className={styles.markers} aria-label="Choose a slide">
+              {work.map((project, index) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  className={styles.marker}
+                  aria-label={`Go to slide ${index + 1}: ${project.title}`}
+                  aria-current={index === current ? 'true' : undefined}
+                  onClick={() => goTo(index)}
+                />
+              ))}
+            </nav>
+          </>
+        ) : null}
       </div>
     </section>
   );
