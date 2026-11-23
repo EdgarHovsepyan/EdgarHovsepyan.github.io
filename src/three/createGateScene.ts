@@ -826,6 +826,10 @@ export function createGateScene(
 
   // --- sizing -----------------------------------------------------------
   let spread = 1;
+  // 0 on wide screens, 1 on portrait ones. In between the pieces blend from
+  // their fixed lanes to the "wings" layout below.
+  let wings = 0;
+  const TAN_HALF_FOV = Math.tan((45 * Math.PI) / 360);
   let quality = 1; // drops when frames run long, see loop()
   const resize = () => {
     const width = mount.clientWidth || 1;
@@ -839,6 +843,7 @@ export function createGateScene(
     camera.updateProjectionMatrix();
     // Portrait screens are narrow: pull the objects in so they stay in frame.
     spread = Math.min(1, Math.max(0.42, camera.aspect / 1.5));
+    wings = Math.min(1, Math.max(0, (1.35 - camera.aspect) / 0.5));
     if (reducedMotion) render(0);
   };
 
@@ -919,15 +924,25 @@ export function createGateScene(
       node.rotation.x += spin[0] * dt * whirl;
       node.rotation.y += spin[1] * dt * whirl;
       node.rotation.z += spin[2] * dt;
-      node.position.x = (node.userData.x as number) * spread + floater.ox;
+      // Narrow screens have no side lanes: the text is the whole width. So the
+      // pieces ride the edges of the frame instead. Each one is held at the
+      // frustum edge for its current depth, part of it off-screen, and it
+      // stays there as the camera flies past: a procession down both wings
+      // with the reading column left clear.
+      const home = node.userData.x as number;
+      const lane = home * spread;
+      const inset = 0.92 + (floater.phase / 6.28) * 0.18;
+      const edge = Math.sign(home) * Math.max(0.2, ahead) * TAN_HALF_FOV * camera.aspect * inset;
+      node.position.x = lane + (edge - lane) * wings + floater.ox;
       node.position.y =
         floater.baseY +
         Math.sin(clock * 0.5 + floater.phase) * floater.bob +
         floater.oy;
       // Pieces shrink away as the camera reaches them, so nothing ever fills
       // the screen in front of the text.
-      const near = Math.min(1, Math.max(0, (ahead - 1.6) / 3.2));
-      node.scale.setScalar(floater.scale * near * near * (3 - 2 * near));
+      // On the wings a piece leaves earlier, before it can grow into the text.
+      const near = Math.min(1, Math.max(0, (ahead - 1.6 - wings * 1.5) / 3.2));
+      node.scale.setScalar(floater.scale * (1 - wings * 0.12) * near * near * (3 - 2 * near));
     }
     for (let i = 0; i < rings.length; i++) {
       rings[i]!.rotation.z += dt * (i % 2 ? -0.05 : 0.05) * (1 + energy * 6);
@@ -936,9 +951,28 @@ export function createGateScene(
     hand.rotation.z += dt * (0.12 + energy * 0.9);
     trophy.rotation.y += dt * 0.5;
     finale.position.x = 1.9 * (spread - 0.42) * 1.72;
+    // On portrait screens the finale sits low, under the call to action.
+    finale.position.y = -1.55 * wings;
+    finale.scale.setScalar(1 - 0.28 * wings);
+
+    // Reading calm: the scene is vivid while the page moves and settles back
+    // while you read. Only where the text shares the frame with it.
+    if (wings > 0) {
+      const target = 0.42 + Math.min(1, energy * 4) * 0.5;
+      calm += (target - calm) * Math.min(1, dt * (target > calm ? 6 : 1.4));
+      if (Math.abs(calm - shownCalm) > 0.01) {
+        shownCalm = calm;
+        mount.style.opacity = (0.8 - (0.8 - calm) * wings).toFixed(2);
+      }
+    } else if (shownCalm !== -1) {
+      shownCalm = -1;
+      mount.style.removeProperty('opacity');
+    }
     draw();
   };
 
+  let calm = 0.42;
+  let shownCalm = -1;
   let frame = 0;
   let previous = 0;
   let slow = 0;
