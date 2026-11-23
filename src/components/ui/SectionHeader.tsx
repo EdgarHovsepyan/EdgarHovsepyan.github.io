@@ -9,7 +9,7 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ index, label, title }: SectionHeaderProps) {
-  const kickerText = `( ${index} ) — ${label}`;
+  const kickerText = `( ${index} ) · ${label}`;
   const kickerRef = useScramble<HTMLDivElement>(kickerText);
   // Every section title drifts a touch slower than the page (and the kicker a
   // touch slower still) — one shared depth system across the whole site.
