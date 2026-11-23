@@ -38,6 +38,14 @@
 
 <sub>The hero. The portrait is drawn from tens of thousands of particles sampled from the photo. They part around the cursor, take a shockwave on click and blow away as you scroll.</sub>
 
+<br /><br />
+
+<a href="https://edgarhovsepyan.github.io/assets/showreel.mp4">
+  <img src=".github/media/showreel.webp" width="92%" alt="The 18 second showreel: name, role, numbers, the award, a walk through the site, and the end card" />
+</a>
+
+<sub>The showreel, 18 seconds. Built with Remotion from the same type, colours and screenshots as the site. Click for the full-quality video.</sub>
+
 </div>
 
 <br />
@@ -73,6 +81,11 @@ The full CV is in [`CV-2026.md`](CV-2026.md), and on the site as PDF and Word.
 <div align="center">
   <img src=".github/media/phones.webp" width="100%" alt="Four phone screens: hero, work carousel, section menu and CV grid" />
   <sub><b>On a phone.</b> The gallery becomes a swipe carousel, the gate strip in the header opens the section menu, the CV sheets become a grid, and the 3D pieces ride the edges of the screen so the text stays clear.</sub>
+</div>
+
+<div align="center">
+  <img src=".github/media/awards.webp" width="92%" alt="The awards block: Game of the Year set as a poster with a Shortlisted stamp" />
+  <sub><b>Recognition.</b> The award set as a poster. The two lines close in on scroll and the result lands as a stamp.</sub>
 </div>
 
 ## How it is built
@@ -146,6 +159,7 @@ Add `?gl=force` to the URL to run the 3D scene on a machine without a GPU.
 | Designed and Light CV, one page each | `tools/cv-print-premium.html`, `tools/cv-print-branded.html` | `node tools/print_cv.cjs` |
 | Social preview, README banner and hero screenshot | `tools/og-image.html`, `tools/banner.html` | `node tools/render_og.cjs` |
 | `CONTENT.md`, the text mirror of `src/data` | `src/data/*.ts` | `node tools/sync_content.mjs` |
+| The showreel (`public/assets/showreel.mp4`) | `reel/src/Reel.tsx`, a Remotion project with its own `package.json` | `cd reel && npm install && npm run render` |
 
 The two `.cjs` scripts need the built site served on port 4173 (`npm run build`, then `npx vite preview`), so the templates can load the site fonts. [`LINKEDIN.md`](LINKEDIN.md) is a hand-kept draft of the profile text.
 
@@ -175,6 +189,7 @@ The two `.cjs` scripts need the built site served on port 4173 (`npm run build`,
 │  │                    useMagnetic · useScramble · useDraggableMarquee · useReducedMotion
 │  ├─ three/            createGateScene · createPortraitParticles (lazy chunk)
 │  └─ styles/           global tokens
+├─ reel/                Remotion project for the 18 second showreel
 ├─ tools/               CV, image and content generators
 ├─ CONTENT.md           generated mirror of the site text
 ├─ CV-2026.md           generated CV source

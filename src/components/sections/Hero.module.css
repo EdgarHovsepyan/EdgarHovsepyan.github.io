@@ -344,3 +344,71 @@
 .primary .arrow {
   border-radius: 0;
 }
+
+
+/* The reel link is a button that looks like its sibling links. */
+button.secondary {
+  appearance: none;
+  background: none;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  cursor: pointer;
+  color: var(--gold);
+}
+
+.reel {
+  width: min(94vw, 1280px);
+  padding: 0;
+  border: 2px solid var(--text);
+  border-radius: 0;
+  background: #000;
+  color: var(--text);
+  box-shadow: 14px 14px 0 var(--gold);
+}
+
+.reel:modal {
+  overscroll-behavior: contain;
+}
+
+.reel::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(4, 5, 9, 0.86);
+}
+
+.film {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.reelBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-top: 2px solid var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted-3);
+}
+
+.reelClose {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}

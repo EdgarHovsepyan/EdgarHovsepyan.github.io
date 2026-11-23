@@ -12,6 +12,8 @@ export function Hero() {
   const eyebrow = useScramble<HTMLDivElement>(profile.fullName);
   const hero = useScrollProgress<HTMLElement>({ mode: 'exit' });
   const particles = useRef<HTMLDivElement>(null);
+  const reel = useRef<HTMLDialogElement>(null);
+  const film = useRef<HTMLVideoElement>(null);
   const reduced = useReducedMotion();
 
   // Desktop + mouse + motion allowed: swap the photo for its particle twin once
@@ -135,6 +137,17 @@ export function Hero() {
                   →
                 </span>
               </a>
+              <button
+                type="button"
+                className={styles.secondary}
+                data-cursor="Watch"
+                onClick={() => {
+                  reel.current?.showModal();
+                  void film.current?.play().catch(() => {});
+                }}
+              >
+                Watch the reel ▸
+              </button>
               <a href={profile.cv} download className={styles.secondary}>
                 Download CV ↓
               </a>
@@ -145,6 +158,31 @@ export function Hero() {
           </div>
         </div>
       </div>
+      {/* The 18 second reel, in a native dialog. The video loads only when
+          opened and stops when the dialog closes, however it is closed. */}
+      <dialog
+        ref={reel}
+        className={styles.reel}
+        aria-label="Showreel"
+        onClose={() => film.current?.pause()}
+        {...({ closedby: 'any' } as object)}
+      >
+        <video
+          ref={film}
+          className={styles.film}
+          src="/assets/showreel.mp4"
+          poster="/assets/showreel-poster.webp"
+          width={1920}
+          height={1080}
+          controls
+          playsInline
+          preload="none"
+        />
+        <form method="dialog" className={styles.reelBar}>
+          <span>Showreel · 18 seconds · no sound</span>
+          <button className={styles.reelClose}>Close</button>
+        </form>
+      </dialog>
     </header>
   );
 }
