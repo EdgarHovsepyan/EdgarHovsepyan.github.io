@@ -13,7 +13,7 @@ _Generated 2026-11-23._
 - **fullName:** Edgar Hovsepyan
 - **initials:** Է|Հ
 - **title:** Senior iGaming Engineer · Games & Platform
-- **badge:** ✦ SBC Americas 2025 GotY Shortlist · BFTH Arena 2024 Finalist
+- **badge:** SBC Americas 2025 GotY Shortlist / BFTH Arena 2024 Finalist
 - **location:** Yerevan, Armenia · Remote worldwide / on-site
 - **email:** edgarhovsepyan94@gmail.com
 - **phone:** +374 94 276 656

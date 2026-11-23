@@ -24,9 +24,9 @@ function CardInner({ game }: { game: Game }) {
         <div className={styles.artFallback} aria-hidden="true">
           {/* Symbols live in CSS content (data-ch), not text nodes — so they can
               never degrade into raw text (stale CSS, copy/paste, screen readers). */}
-          <span className={styles.glyph} data-ch={game.glyph ?? '◆'} />
+          <span className={styles.glyph} data-ch={game.glyph ?? '7'} />
           <span className={styles.rain}>
-            {[...(game.rain ?? ['◆', '●']), ...(game.rain ?? ['◆', '●'])].map((ch, i) => (
+            {[...(game.rain ?? ['7', '0']), ...(game.rain ?? ['7', '0'])].map((ch, i) => (
               <i key={i} data-ch={ch} />
             ))}
           </span>
@@ -39,12 +39,12 @@ function CardInner({ game }: { game: Game }) {
           <span className={styles.type}>{game.type}</span>
           {game.featured ? (
             <span className={styles.star} aria-hidden="true">
-              ★
+              Top
             </span>
           ) : null}
         </div>
 
-        {game.award ? <div className={styles.award}>🏆 {game.award}</div> : null}
+        {game.award ? <div className={styles.award}>{game.award}</div> : null}
 
         <h3 className={styles.name}>{game.name}</h3>
         <p className={styles.craft}>{game.craft}</p>

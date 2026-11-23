@@ -42,7 +42,14 @@
   color: var(--accent);
 }
 
+/* Separator between words: a slanted bar, the same mark as the closing band. */
 .star {
-  padding: 0 28px;
-  color: #3a3a42;
+  display: inline-block;
+  width: 0.1em;
+  height: 0.62em;
+  margin: 0 28px;
+  background: #4a4f63;
+  transform: skewX(-16deg);
+  vertical-align: middle;
+  align-self: center;
 }

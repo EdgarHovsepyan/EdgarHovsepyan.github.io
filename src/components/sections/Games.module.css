@@ -125,10 +125,16 @@
   -webkit-backdrop-filter: blur(4px);
 }
 
+/* Featured: a hard gold tab with a word in it. */
 .star {
-  color: var(--gold);
-  font-size: 14px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+  padding: 3px 7px;
+  background: var(--gold);
+  color: #0a0a0e;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .award {
@@ -140,7 +146,7 @@
   text-transform: uppercase;
   color: var(--gold);
   padding: 6px 12px;
-  border-radius: 100px;
+  border-radius: 2px;
   border: 1px solid rgba(229, 192, 123, 0.45);
   background: rgba(20, 16, 6, 0.65);
   backdrop-filter: blur(4px);

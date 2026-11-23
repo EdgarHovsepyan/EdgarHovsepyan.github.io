@@ -104,7 +104,7 @@ export function Contact() {
         <div className={styles.bandTrack}>
           {[0, 1].map((copy) => (
             <span key={copy} className={styles.bandCopy}>
-              Games <i>✦</i> Platform <i>✦</i> Tooling <i>✦</i> Let’s build <i>✦</i>{' '}
+              Games <i /> Platform <i /> Tooling <i /> Let’s build <i />{' '}
             </span>
           ))}
         </div>

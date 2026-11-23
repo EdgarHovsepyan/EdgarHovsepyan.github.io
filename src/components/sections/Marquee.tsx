@@ -8,9 +8,7 @@ function Group() {
     <span className={styles.group}>
       {marqueeTokens.map((token, index) =>
         token.kind === 'star' ? (
-          <span key={`star-${index}`} className={styles.star}>
-            ✦
-          </span>
+          <span key={`star-${index}`} className={styles.star} aria-hidden="true" />
         ) : (
           <span key={`word-${index}`} className={cx(styles.word, token.accent && styles.accent)}>
             {token.text}

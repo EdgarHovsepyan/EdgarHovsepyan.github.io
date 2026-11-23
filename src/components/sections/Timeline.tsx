@@ -48,7 +48,7 @@ function TimelineRow({ entry, index }: RowProps) {
           <ul className={styles.highlightList}>
             {entry.highlights.map((highlight) => (
               <li key={highlight} className={styles.highlight}>
-                <span className={styles.bullet}>✦</span>
+                <span className={styles.bullet} aria-hidden="true" />
                 <span>{highlight}</span>
               </li>
             ))}

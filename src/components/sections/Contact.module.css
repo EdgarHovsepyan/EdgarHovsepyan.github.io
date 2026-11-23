@@ -223,12 +223,14 @@
   -webkit-text-stroke: 1px rgba(159, 184, 255, 0.55);
 }
 
+/* Separator: a hard slanted block, no ornament. */
 .bandCopy i {
-  font-style: normal;
-  font-size: 0.4em;
-  vertical-align: middle;
-  color: var(--gold);
-  -webkit-text-stroke: 0;
+  display: inline-block;
+  width: 0.11em;
+  height: 0.66em;
+  margin: 0 0.22em 0 0.16em;
+  background: var(--gold);
+  transform: skewX(-16deg);
 }
 
 @media (prefers-reduced-motion: no-preference) {
