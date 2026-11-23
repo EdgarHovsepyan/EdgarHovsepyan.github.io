@@ -15,26 +15,26 @@ const cvs: CvFile[] = [
   {
     label: 'Premium CV',
     format: 'PDF',
-    desc: 'Designed, single-page, on-brand — for recruiters, LinkedIn, referrals & direct-to-studio.',
+    desc: 'Designed single page, on brand. For recruiters, LinkedIn, referrals and studios directly.',
     href: '/cv/Edgar_Hovsepyan_CV.pdf',
     featured: true,
   },
   {
     label: 'ATS CV',
     format: 'PDF',
-    desc: 'Single-column, parser-friendly — for online application portals and ATS screening.',
+    desc: 'Single column, parser friendly. For application portals and ATS screening.',
     href: '/cv/Edgar_Hovsepyan_CV_ATS.pdf',
   },
   {
     label: 'ATS CV',
     format: 'DOCX',
-    desc: 'Word version with identical content — for portals that only accept .docx.',
+    desc: 'Word version, same content. For portals that only accept .docx.',
     href: '/cv/Edgar_Hovsepyan_CV_ATS.docx',
   },
   {
     label: 'Branded CV',
     format: 'PDF',
-    desc: 'Light, print-friendly layout with accent styling — a middle-ground option.',
+    desc: 'Light layout with accent colour that prints well.',
     href: '/cv/Edgar_Hovsepyan_CV_Branded.pdf',
   },
 ];

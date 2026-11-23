@@ -97,8 +97,8 @@ export function Hero() {
         <div className={styles.line}>
           <div className={styles.lineIn}>
             <p className={styles.role}>
-              Senior <span className={styles.strong}>Game Platform Engineer</span> · iGaming —
-              C#/.NET · TypeScript · Kubernetes · GitOps · PixiJS / Three.js ·{' '}
+              Senior <span className={styles.strong}>iGaming Engineer</span> · games, platform and
+              tooling. PixiJS / Three.js · TypeScript · C#/.NET · Kubernetes ·{' '}
               <span className={styles.ai}>AI-assisted pipelines</span>
             </p>
           </div>
@@ -113,8 +113,8 @@ export function Hero() {
         <div className={styles.line}>
           <div className={styles.lineIn}>
             <p className={styles.summary}>
-              All about the feel — the weight of a spin, the snap of a reel stop, the juice players
-              remember. I join at zero and build to ten.
+              I build casino games and the services they run on. Seven years and 50+ titles, from
+              the reel stop to the random numbers behind it.
             </p>
           </div>
         </div>

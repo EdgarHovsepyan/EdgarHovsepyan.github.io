@@ -78,3 +78,77 @@
     display: none;
   }
 }
+
+/* Gate pass: only when motion is allowed; otherwise the HUD alone changes. */
+.pass {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pass {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .sweep {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-cyan) 30%, #fff 50%, var(--accent) 70%, transparent);
+    box-shadow: 0 0 24px 2px rgba(77, 124, 255, 0.55);
+    animation: sweep 0.9s cubic-bezier(0.7, 0, 0.2, 1) both;
+  }
+
+  .big {
+    grid-area: 1 / 1;
+    font-family: var(--font-cond);
+    font-size: clamp(180px, 34vw, 520px);
+    font-weight: 900;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(159, 184, 255, 0.5);
+    animation: card 1.1s var(--ease) both;
+  }
+
+  .bigName {
+    grid-area: 1 / 1;
+    align-self: end;
+    margin-bottom: 22vh;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--accent-blue-soft);
+    animation: card 1.1s var(--ease) both;
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+@keyframes card {
+  0% {
+    opacity: 0;
+    scale: 1.12;
+  }
+  25% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+}

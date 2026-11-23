@@ -18,7 +18,8 @@ export function Profile() {
           <p className={styles.para}>
             In seven years I have shipped <span className={styles.accent}>50+ games end to end</span>,
             slots to crash to live and 3D roulette, and spent four of those years leading 10 Unity developers
-            plus front-end, back-end and QA, building VR and WebXR worlds.
+            plus front-end, back-end and QA, building VR and WebXR worlds. Since 2026 I also build what
+            sits under the games at RedCore: the RNG, bet history and the release pipeline.
           </p>
           <p className={styles.paraMuted}>
             My favorite problems sit where physics meets server truth: a Plinko ball that must land

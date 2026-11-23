@@ -3,6 +3,7 @@ import { Chip } from '../ui/Chip.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { bento } from '../../data/expertise.ts';
 import type { BentoCell } from '../../data/types.ts';
+import { useSpotlight } from '../../hooks/useSpotlight.ts';
 import { useTilt } from '../../hooks/useTilt.ts';
 import { cx } from '../../utils/cx.ts';
 import styles from './Expertise.module.css';
@@ -25,12 +26,14 @@ function BentoCard({ cell }: { cell: BentoCell }) {
 }
 
 export function Expertise() {
+  const grid = useSpotlight<HTMLDivElement>(`.${styles.cell}`);
+
   return (
     <section id="expertise" className={styles.section}>
       <Reveal className={styles.header}>
         <SectionHeader index="05" label="Core expertise" title="The stack" />
       </Reveal>
-      <div className={styles.grid}>
+      <div ref={grid} className={styles.grid}>
         {bento.map((cell, index) => (
           <Reveal
             key={cell.label}

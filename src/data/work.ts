@@ -19,7 +19,7 @@ export const work: WorkProject[] = [
     id: 'A3',
     title: '3D Bet-on Tables',
     description:
-      '3D Roulette, 3D Hi-Lo, 3D Baccarat, Blackjack and Deal-or-No-Deal — deterministic, replay-verified.',
+      '3D Roulette, 3D Hi-Lo, 3D Baccarat, Blackjack and Deal-or-No-Deal. Outcomes are deterministic and every round can be replayed.',
     tags: ['WebGL', 'Physics', 'Casino Math'],
   },
   {
@@ -28,5 +28,12 @@ export const work: WorkProject[] = [
     description:
       'EV-charging platform (NestJS/OCPP), a WhatsApp AI sales agent (RAG), and an indie slot studio on Stake Engine.',
     tags: ['NestJS', 'RAG', 'Stake Engine'],
+  },
+  {
+    id: 'A5',
+    title: 'Fair Play Services',
+    description:
+      'A random-number service for real-money games, Plinko rounds a player can verify by round ID, and the bet history behind them.',
+    tags: ['RNG', 'Provably fair', 'ClickHouse'],
   },
 ];

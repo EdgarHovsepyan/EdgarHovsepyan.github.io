@@ -31,14 +31,14 @@ export function SkillCycler() {
   if (reduced) {
     return (
       <p className={styles.row}>
-        A programmer with deep graphic-design experience — {SKILLS.join(' · ')}
+        A programmer with deep graphic-design experience: {SKILLS.join(' · ')}
       </p>
     );
   }
 
   return (
     <p className={styles.row}>
-      A programmer with deep graphic-design experience —{' '}
+      A programmer with deep graphic-design experience:{' '}
       <span className={styles.mask} aria-live="off">
         {SKILLS.map((skill, i) => (
           <span

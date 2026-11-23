@@ -94,3 +94,49 @@
     grid-column: auto;
   }
 }
+
+
+/* Travelling light: useSpotlight writes the cursor position into --mx / --my on
+   every card, and this ring + pool pick it up. The ring is a masked border, so
+   the edge nearest the cursor lights first. */
+.cell::before,
+.cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease);
+  z-index: 3;
+}
+
+.cell::before {
+  padding: 1px;
+  background: radial-gradient(
+    340px circle at var(--mx, -400px) var(--my, -400px),
+    rgba(159, 184, 255, 0.95),
+    rgba(34, 211, 238, 0.35) 40%,
+    transparent 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+.cell::after {
+  background: radial-gradient(
+    420px circle at var(--mx, -400px) var(--my, -400px),
+    rgba(77, 124, 255, 0.13),
+    transparent 65%
+  );
+}
+
+.grid[data-lit] .cell::before,
+.grid[data-lit] .cell::after {
+  opacity: 1;
+}

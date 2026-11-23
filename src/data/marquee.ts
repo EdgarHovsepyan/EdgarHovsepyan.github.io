@@ -15,4 +15,9 @@ export const marqueeTokens: MarqueeToken[] = [
   { kind: 'star' },
   { kind: 'word', text: 'Casino Math' },
   { kind: 'star' },
+  { kind: 'word', text: 'RNG & Fairness', accent: true },
+  { kind: 'star' },
+  { kind: 'word', text: 'C# / .NET' },
+  { kind: 'word', text: 'Kubernetes' },
+  { kind: 'star' },
 ];

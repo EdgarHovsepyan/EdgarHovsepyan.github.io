@@ -44,7 +44,7 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
       <div className={styles.panelInner}>
         <div className={styles.panelTop}>
           <span className={styles.panelNo}>{project.id}</span>
-          <span className={styles.panelCount}>{`0${index + 1} — 0${work.length}`}</span>
+          <span className={styles.panelCount}>{`0${index + 1} / 0${work.length}`}</span>
         </div>
         <h3 className={styles.panelTitle}>{project.title}</h3>
         <p className={styles.panelDesc}>{project.description}</p>

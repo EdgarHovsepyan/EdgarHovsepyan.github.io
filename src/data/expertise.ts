@@ -5,9 +5,17 @@ export const bento: BentoCell[] = [
     wide: true,
     accent: true,
     label: 'AI Engineering',
-    title: 'The model as a teammate inside the engine.',
-    body: 'Production agentic pipelines on Anthropic’s stack — Claude Code, custom Skills and the Model Context Protocol — not a chatbot beside the work.',
+    title: 'I run Claude Code inside the build, every day.',
+    body: 'Agent pipelines in production on Claude Code, custom skills and MCP servers: asset generation, atlas packing, game scaffolding and prototyping.',
     chips: ['Claude Code', 'MCP Ecosystem', 'Agentic Systems', 'Context Eng.', 'RAG', 'AI Pipelines'],
+  },
+  {
+    label: 'Platform & Delivery',
+    chips: ['C# / .NET services', 'Kubernetes', 'Helm', 'Argo CD', 'Terraform', 'AWS', 'Keycloak / OIDC', 'ClickHouse', 'GitLab CI'],
+  },
+  {
+    label: 'Fairness & Quality',
+    chips: ['RNG design', 'Provably fair rounds', 'Test-first', 'BDD / Gherkin', 'Playwright', 'Load & soak tests'],
   },
   {
     label: 'Core & Slots',
@@ -50,6 +58,6 @@ export const bento: BentoCell[] = [
   },
   {
     label: 'Languages',
-    chips: ['Armenian — Native', 'Russian — Full professional', 'English — Professional working'],
+    chips: ['Armenian: native', 'Russian: full professional', 'English: professional working'],
   },
 ];
