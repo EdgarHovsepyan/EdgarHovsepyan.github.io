@@ -5,6 +5,7 @@ import { Grain } from './components/effects/Grain.tsx';
 import { ScrollProgress } from './components/effects/ScrollProgress.tsx';
 import { SurrealLayer } from './components/effects/SurrealLayer.tsx';
 import { CustomCursor } from './components/effects/CustomCursor.tsx';
+import { GateHud } from './components/effects/GateHud.tsx';
 import { SoundToggle } from './components/effects/SoundToggle.tsx';
 import { SideRails } from './components/layout/SideRails.tsx';
 import { Nav } from './components/layout/Nav.tsx';
@@ -49,6 +50,7 @@ export function App() {
         <Contact />
       </main>
       <Footer />
+      <GateHud />
       <SoundToggle />
     </>
   );

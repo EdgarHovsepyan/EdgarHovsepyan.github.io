@@ -1,38 +1,107 @@
 .eye {
-  width: clamp(84px, 9vw, 120px);
+  --dilate: 1;
+  display: block;
+  width: clamp(130px, 13vw, 190px);
   height: auto;
-  color: rgba(229, 192, 123, 0.6);
+  margin: 6px 0 10px -14px;
   overflow: visible;
 }
 
+.dial line {
+  stroke: rgba(229, 192, 123, 0.5);
+  stroke-width: 1;
+}
+
+.orbit {
+  fill: none;
+  stroke: rgba(159, 184, 255, 0.35);
+  stroke-width: 0.8;
+  stroke-dasharray: 2 9;
+}
+
+.dial,
+.orbit {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.ball {
+  fill: rgba(6, 8, 15, 0.82);
+}
+
+.rim {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 5px rgba(229, 192, 123, 0.45));
+}
+
+.iris {
+  filter: drop-shadow(0 0 9px rgba(34, 211, 238, 0.65));
+}
+
+.fibres line {
+  stroke: rgba(210, 235, 255, 0.34);
+  stroke-width: 0.7;
+}
+
+.limbus {
+  fill: none;
+  stroke: #04070f;
+  stroke-width: 2.4;
+}
+
 .pupil {
-  fill: var(--accent-cyan);
-  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.7));
+  fill: #02030a;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(var(--dilate));
 }
 
-/* The lid sweeps down in a slow dream blink every so often. */
-.lid path {
-  fill: #07070a;
-  opacity: 0;
-  animation: blink 9s ease-in-out infinite;
+.glint {
+  fill: rgba(255, 255, 255, 0.9);
 }
 
-@keyframes blink {
-  0%,
-  92%,
-  100% {
-    opacity: 0;
-    transform: translateY(-18px);
+/* Lids: two slabs inside the almond that meet in the middle to blink. */
+.lidTop,
+.lidBottom {
+  fill: #080a12;
+  stroke: var(--gold);
+  stroke-width: 1;
+  transition: transform 0.13s ease-in;
+}
+
+.lidTop {
+  transform: translateY(-54px);
+}
+
+.lidBottom {
+  transform: translateY(54px);
+}
+
+.shut .lidTop,
+.shut .lidBottom {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dial {
+    animation: turn 70s linear infinite;
   }
-  95%,
-  97% {
-    opacity: 1;
-    transform: translateY(12px);
+
+  .orbit {
+    animation: turn 38s linear infinite reverse;
+  }
+
+  .fibres {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: turn 90s linear infinite;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .lid path {
-    animation: none;
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
   }
 }

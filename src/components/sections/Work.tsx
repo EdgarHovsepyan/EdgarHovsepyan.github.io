@@ -39,6 +39,7 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
       </div>
       <div className={styles.sheen} aria-hidden="true" />
       <div className={styles.sig} aria-hidden="true" />
+      <div className={styles.numeral} aria-hidden="true">{`0${index + 1}`}</div>
 
       <div className={styles.panelInner}>
         <div className={styles.panelTop}>
@@ -78,6 +79,7 @@ export function Work() {
 
     const mq = window.matchMedia(DESKTOP);
     const native = CSS.supports('(animation-timeline: scroll()) and (animation-range: 0% 100%)');
+    const panels = Array.from(trackEl.children) as HTMLElement[];
     let distance = 0;
     let frame = 0;
 
@@ -85,6 +87,10 @@ export function Work() {
       frame = 0;
       if (!mq.matches) {
         rootEl.style.removeProperty('--p');
+        for (const panel of panels) {
+          panel.style.removeProperty('--shift');
+          panel.style.removeProperty('--focus');
+        }
         if (!native) trackEl.style.removeProperty('translate');
         return;
       }
@@ -93,6 +99,15 @@ export function Work() {
       const p = span > 0 ? Math.min(1, Math.max(0, -rect.top / span)) : 0;
       // Drives the "01 — 04" counter bar; cheap, and shared by both paths.
       rootEl.style.setProperty('--p', p.toFixed(4));
+      // Focus pull: the panel nearest the centre of the screen is the one in
+      // play; its neighbours step back. --shift also drives numeral parallax.
+      const half = window.innerWidth / 2;
+      for (const panel of panels) {
+        const box = panel.getBoundingClientRect();
+        const shift = Math.min(1, Math.max(-1, (box.left + box.width / 2 - half) / (half * 1.25)));
+        panel.style.setProperty('--shift', shift.toFixed(3));
+        panel.style.setProperty('--focus', (1 - Math.abs(shift)).toFixed(3));
+      }
       if (!native) trackEl.style.translate = `${(-p * distance).toFixed(1)}px 0`;
     };
     const schedule = () => {

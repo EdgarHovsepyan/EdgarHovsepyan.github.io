@@ -11,6 +11,7 @@ import {
   ExtrudeGeometry,
   Fog,
   Group,
+  HalfFloatType,
   LatheGeometry,
   Mesh,
   MeshBasicMaterial,
@@ -29,10 +30,15 @@ import {
   TorusKnotGeometry,
   Vector2,
   Vector3,
+  WebGLRenderTarget,
   WebGLRenderer,
 } from "three";
 import type { Material, Object3D } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 // The page as a flight: one luminous gate per chapter, and between the gates the
@@ -489,14 +495,14 @@ export function createGateScene(
     glow: new MeshBasicMaterial({
       color: BLUE,
       transparent: true,
-      opacity: 0.16,
+      opacity: mobile ? 0.16 : 0.05,
       blending: AdditiveBlending,
       depthWrite: false,
     }),
     glowAlt: new MeshBasicMaterial({
       color: CYAN,
       transparent: true,
-      opacity: 0.13,
+      opacity: mobile ? 0.13 : 0.04,
       blending: AdditiveBlending,
       depthWrite: false,
     }),
@@ -532,6 +538,7 @@ export function createGateScene(
   // --- corridor ---------------------------------------------------------
   const random = mulberry(20261123);
   const floaters: Floater[] = [];
+  const placed: { x: number; y: number; z: number; r: number }[] = [];
   const rings: Group[] = [];
   const perGate = mobile ? 2 : 3;
 
@@ -552,13 +559,27 @@ export function createGateScene(
       const kit = kits[(g - 1) % kits.length]!;
       const mesh = kit[i % kit.length]!();
       // Keep the reading column clear: objects live left and right of centre.
+      // Rejection-sample a spot: left or right of the reading column, and far
+      // enough from every piece already placed that no two can intersect,
+      // even at full size and mid-bob.
       const side = (g + i) % 2 ? 1 : -1;
-      const x = side * (2.6 + random() * 1.8);
-      const y = (random() - 0.5) * 3.2;
-      mesh.userData.x = x;
-      mesh.position.set(x, y, z - 1.2 - random() * (GATE_SPACING - 2.4));
-      mesh.rotation.set(random() * 6.28, random() * 6.28, random() * 6.28);
       const scale = 0.9 + random() * 0.8;
+      let x = 0;
+      let y = 0;
+      let depth = 0;
+      for (let attempt = 0; attempt < 40; attempt++) {
+        x = side * (2.6 + random() * 1.8);
+        y = (random() - 0.5) * 3.2;
+        depth = z - 1.4 - random() * (GATE_SPACING - 2.8);
+        const clear = placed.every(
+          (other) => Math.hypot(other.x - x, other.y - y, other.z - depth) > 1.2 + other.r + scale * 0.75,
+        );
+        if (clear) break;
+      }
+      placed.push({ x, y, z: depth, r: scale * 0.75 });
+      mesh.userData.x = x;
+      mesh.position.set(x, y, depth);
+      mesh.rotation.set(random() * 6.28, random() * 6.28, random() * 6.28);
       mesh.scale.setScalar(scale);
       scene.add(mesh);
       floaters.push({
@@ -611,16 +632,38 @@ export function createGateScene(
   const travel = (gates - 1) * GATE_SPACING + 3;
   const startZ = 5.5;
 
+  // --- post: bloom on desktop -------------------------------------------
+  // Gates, gold pips and card ink are the only things bright enough to pass
+  // the threshold, so they bleed light while the dark pieces stay crisp. The
+  // canvas is premultiplied, so the halo composites as added light over the
+  // page. Phones skip the pass.
+  let composer: EffectComposer | undefined;
+  if (!mobile) {
+    const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: 4 });
+    composer = new EffectComposer(renderer, target);
+    const scenePass = new RenderPass(scene, camera);
+    scenePass.clearColor = new Color(0x000000);
+    scenePass.clearAlpha = 0;
+    composer.addPass(scenePass);
+    composer.addPass(new UnrealBloomPass(new Vector2(1, 1), 0.32, 0.6, 0.92));
+    composer.addPass(new OutputPass());
+  }
+  const draw = () => {
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
+  };
+
   // --- sizing -----------------------------------------------------------
   let spread = 1;
   let quality = 1; // drops when frames run long, see loop()
   const resize = () => {
     const width = mount.clientWidth || 1;
     const height = mount.clientHeight || 1;
-    renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5) * quality,
-    );
+    const ratio = Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5) * quality;
+    renderer.setPixelRatio(ratio);
     renderer.setSize(width, height, false);
+    composer?.setPixelRatio(ratio);
+    composer?.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     // Portrait screens are narrow: pull the objects in so they stay in frame.
@@ -719,7 +762,7 @@ export function createGateScene(
       rings[i]!.rotation.z += dt * (i % 2 ? -0.05 : 0.05) * (1 + energy * 6);
     }
     dust.rotation.z += dt * 0.012;
-    renderer.render(scene, camera);
+    draw();
   };
 
   let frame = 0;
@@ -805,6 +848,7 @@ export function createGateScene(
       }
       dustGeometry.dispose();
       dustMaterial.dispose();
+      composer?.dispose();
       environment.dispose();
       pmrem.dispose();
       renderer.dispose();

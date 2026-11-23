@@ -19,6 +19,6 @@
 /* On phones the objects cross the reading column, so they sit further back. */
 @media (max-width: 820px) {
   .live {
-    opacity: 0.5;
+    opacity: 0.38;
   }
 }
