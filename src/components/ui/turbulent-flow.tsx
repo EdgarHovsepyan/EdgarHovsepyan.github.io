@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cx } from '@/utils/cx';
 import styles from './turbulent-flow.module.css';
@@ -23,10 +22,10 @@ const fragmentBody = `
   uniform float u_time;
   uniform vec2  u_resolution;
   uniform vec2  u_mouse;       // centered, ~-0.5..0.5
-  uniform float u_noise_scale; // GSAP-driven, subtle base-frequency breathing
-  uniform float u_distortion;  // GSAP-driven, domain-warp amount
-  uniform float u_turbulence;  // GSAP-driven, density gain
-  uniform float u_sharpness;   // GSAP-driven, edge tightness
+  uniform float u_noise_scale; // subtle base-frequency breathing
+  uniform float u_distortion;  // domain-warp amount
+  uniform float u_turbulence;  // density gain
+  uniform float u_sharpness;   // edge tightness
   uniform float u_vel;         // smoothed scroll energy 0..1 — the field reacts to it
   varying vec2  vUv;
 
@@ -181,8 +180,8 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     const loc = {} as Record<(typeof UNIFORM_NAMES)[number], WebGLUniformLocation | null>;
     for (const name of UNIFORM_NAMES) loc[name] = gl.getUniformLocation(program, name);
 
-    // GSAP animates these plain {value} holders exactly as it did the three
-    // uniforms; the tick uploads them each frame.
+    // Plain {value} holders for the breathing parameters; the tick animates
+    // and uploads them each frame.
     const u = {
       noiseScale: { value: 4.0 },
       distortion: { value: 0.15 },
@@ -266,20 +265,17 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
       gl.uniform1f(loc.u_time, time);
       gl.uniform2f(loc.u_mouse, mx, my);
       gl.uniform1f(loc.u_vel, vel);
+      // "Breathing": four field parameters drift on sine waves with periods
+      // that share no common factor, so the medium never visibly repeats.
+      // (This used to be a GSAP timeline; plain trigonometry does the same job
+      // and takes the last GSAP import, about 28 KB gzip, off the page.)
+      const s = now / 1000;
+      u.turbulence.value = 0.85 + 0.35 * Math.sin((s * 6.2832) / 21);
+      u.noiseScale.value = 4.4 + 1.6 * Math.sin((s * 6.2832) / 29 + 1);
+      u.distortion.value = 0.17 + 0.07 * Math.sin((s * 6.2832) / 24 + 2);
+      u.sharpness.value = 1.4 + 0.4 * Math.sin((s * 6.2832) / 17 + 3);
       draw();
     };
-
-    // GSAP "breathing" — slow drift of the field parameters.
-    const timeline = gsap.timeline({ repeat: -1 });
-    timeline
-      .to(u.turbulence, { value: 1.2, duration: 6, ease: 'sine.inOut' })
-      .to(u.noiseScale, { value: 6.0, duration: 8, ease: 'power2.inOut' }, 0)
-      .to(u.distortion, { value: 0.24, duration: 7, ease: 'power1.inOut' }, 1)
-      .to(u.sharpness, { value: 1.8, duration: 5, ease: 'power2.inOut' }, 2)
-      .to(u.turbulence, { value: 0.5, duration: 9, ease: 'sine.inOut' })
-      .to(u.noiseScale, { value: 2.8, duration: 10, ease: 'power2.inOut' }, '-=4')
-      .to(u.distortion, { value: 0.1, duration: 8, ease: 'power1.inOut' }, '-=6')
-      .to(u.sharpness, { value: 1.0, duration: 7, ease: 'power2.inOut' }, '-=5');
 
     const onMouseMove = (event: MouseEvent) => {
       tmx = event.clientX / window.innerWidth - 0.5;
@@ -295,15 +291,13 @@ export function TurbulentFlow({ className, maxDpr = 2 }: TurbulentFlowProps) {
     };
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    // Start the loop and the GSAP "breathing" immediately and unconditionally.
-    timeline.play();
+    // Start the loop immediately and unconditionally.
     frameId = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('scroll', onScroll);
       cancelAnimationFrame(frameId);
-      timeline.kill();
       dispose();
     };
   }, [reduced, maxDpr]);

@@ -6,12 +6,12 @@ import type { WorkProject } from '../../data/types.ts';
 import styles from './Work.module.css';
 
 function WorkPanel({ project, index }: { project: WorkProject; index: number }) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
 
   // Pointer parallax: cursor position drives --px/--py (-1…1), which the CSS uses
   // to drift the art layers at different depths and tilt the card. Mouse only.
-  const onMove = (event: React.PointerEvent<HTMLElement>) => {
+  const onMove = (event: React.PointerEvent<HTMLDivElement>) => {
     const el = ref.current;
     if (!el || event.pointerType !== 'mouse') return;
     const rect = el.getBoundingClientRect();
@@ -32,7 +32,7 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
   };
 
   return (
-    <article
+    <div
       ref={ref}
       className={styles.panel}
       role="group"
@@ -62,7 +62,7 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
           ))}
         </div>
       </div>
-    </article>
+    </div>
   );
 }
 

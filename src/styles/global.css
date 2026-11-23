@@ -7,10 +7,12 @@
   --text-tertiary: #b8b8c0;
   --text-muted: #9a9aa3;
   --text-muted-2: #84848d;
-  --text-muted-3: #75757e;
-  --text-faint: #5a5a63;
-  --text-faintest: #4a4a52;
+  --text-muted-3: #8a8a94;
+  --text-faint: #83838d;
+  --text-faintest: #7f7f89;
   --text-soft: #86868f;
+  /* The three quietest text tones were lifted so that every label clears
+     4.5:1 on the page ground (axe: color-contrast). */
 
   --accent: #4d7cff;
   --accent-cyan: #22d3ee;
