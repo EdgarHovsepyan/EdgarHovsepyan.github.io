@@ -79,7 +79,7 @@ The full CV is in [`CV-2026.md`](CV-2026.md), and on the site as PDF and Word.
 </table>
 
 <div align="center">
-  <img src=".github/media/phones.webp" width="100%" alt="Four phone screens: hero, work carousel, section menu and CV grid" />
+  <img src=".github/media/phones.webp" width="100%" alt="Five phone screens: hero, awards poster, work carousel, section menu and CV grid" />
   <sub><b>On a phone.</b> The gallery becomes a swipe carousel, the gate strip in the header opens the section menu, the CV sheets become a grid, and the 3D pieces ride the edges of the screen so the text stays clear.</sub>
 </div>
 
