@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>README banner</title>
+<link rel="stylesheet" href="/fonts/site-fonts.css" />
+<link rel="stylesheet" href="/fonts/fonts.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 360px; background: #07070a; }
+  body { position: relative; overflow: hidden; color: #f4f4f5; }
+  .glow { position: absolute; right: -120px; top: -260px; width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(77,124,255,.3), transparent 64%); }
+  .ring { position: absolute; right: 86px; top: 150px; width: 330px; height: 330px; border-radius: 50%;
+    border: 2px solid #4d7cff; box-shadow: 0 0 36px rgba(77,124,255,.5), inset 0 0 36px rgba(77,124,255,.22); }
+  .ring.b { right: 141px; top: 205px; width: 220px; height: 220px; border: 1px solid rgba(34,211,238,.8); box-shadow: 0 0 22px rgba(34,211,238,.4); }
+  .frame { position: absolute; inset: 20px; border: 1px solid rgba(255,255,255,.09); border-radius: 20px; }
+  .in { position: absolute; inset: 0; padding: 50px 68px; display: flex; flex-direction: column; }
+  .top { display: flex; align-items: center; gap: 20px; font-family: 'JetBrains Mono', monospace; font-size: 16px;
+    letter-spacing: .3em; text-transform: uppercase; color: #9a9aa3; }
+  .mono { width: 58px; height: 58px; border-radius: 14px; border: 1px solid rgba(159,184,255,.4); background: rgba(77,124,255,.14);
+    display: grid; place-items: center; font-family: 'Noto Sans Armenian', sans-serif; font-weight: 500; font-size: 22px; letter-spacing: 0; color: #f4f4f5; }
+  .badges { position: absolute; right: 68px; top: 52px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .badge { padding: 7px 16px; border: 1px solid rgba(229,192,123,.5); border-radius: 100px; background: rgba(229,192,123,.07);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #e5c07b; }
+  h1 { margin-top: auto; font-family: 'Saira Condensed', sans-serif; font-weight: 900; font-size: 104px; line-height: .86; text-transform: uppercase; }
+  h1 b { color: #4d7cff; font-weight: 900; }
+  .role { margin-top: 16px; font-family: 'Saira Condensed', sans-serif; font-weight: 700; font-size: 27px; letter-spacing: .03em; text-transform: uppercase; }
+  .role b { color: #9fb8ff; font-weight: 700; }
+  .stack { margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: .06em; color: #b8b8c0; }
+</style>
+</head>
+<body>
+  <div class="glow"></div><div class="ring"></div><div class="ring b"></div><div class="frame"></div>
+  <div class="badges">
+    <div class="badge">✦ SBC Awards Americas 2025 · GotY shortlist</div>
+    <div class="badge">✦ B.F.T.H. Arena Awards 2024 · Finalist</div>
+  </div>
+  <div class="in">
+    <div class="top"><div class="mono">Է|Հ</div>Portfolio · Source</div>
+    <h1>Edgar <b>Hovsepyan</b></h1>
+    <div class="role">Senior iGaming Engineer · <b>Games, Platform and Tooling</b></div>
+    <div class="stack">PixiJS / Three.js · TypeScript · C#/.NET · Kubernetes · edgarhovsepyan.github.io</div>
+  </div>
+</body>
+</html>

@@ -5,7 +5,7 @@
 <div align="center">
 
 <a href="https://edgarhovsepyan.github.io/">
-  <img src=".github/media/banner.png" width="100%" alt="Edgar Hovsepyan — Senior Game Developer · iGaming" />
+  <img src=".github/media/banner.png" width="100%" alt="Edgar Hovsepyan, Senior iGaming Engineer: games, platform and tooling" />
 </a>
 
 <br /><br />
@@ -339,6 +339,17 @@ npm run preview
 <!-- ══════════════════════════════════════════════════════════════ -->
 <!--                  A R C H I T E C T U R E                       -->
 <!-- ══════════════════════════════════════════════════════════════ -->
+
+#### Generated files and how to rebuild them
+
+| What | Source | Command |
+|---|---|---|
+| ATS CV (`public/cv/*_ATS.pdf`, `.docx`) and `CV-2026.md` | `tools/build_cv.py` | `python3 tools/build_cv.py` |
+| Designed and Light CV (one page each) | `tools/cv-print-premium.html`, `tools/cv-print-branded.html` | `node tools/print_cv.cjs` |
+| Social preview, README banner and hero screenshot | `tools/og-image.html`, `tools/banner.html` | `node tools/render_og.cjs` |
+| `CONTENT.md`, the text mirror of `src/data` | `src/data/*.ts` | `node tools/sync_content.mjs` |
+
+The two `node tools/*.cjs` scripts need the built site served on port 4173 (`npm run build && npx vite preview`), so the templates can load the site fonts. `LINKEDIN.md` is a hand-kept draft of the profile text.
 
 ### 🏗️ &nbsp;Architecture snapshot
 

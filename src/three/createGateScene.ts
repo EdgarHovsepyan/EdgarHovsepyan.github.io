@@ -942,7 +942,10 @@ export function createGateScene(
       // the screen in front of the text.
       // On the wings a piece leaves earlier, before it can grow into the text.
       const near = Math.min(1, Math.max(0, (ahead - 1.6 - wings * 1.5) / 3.2));
-      node.scale.setScalar(floater.scale * (1 - wings * 0.12) * near * near * (3 - 2 * near));
+      // On the wings only the nearest few pieces are on stage at once: the far
+      // ones wait their turn instead of stacking up along the edge.
+      const far = 1 - wings * Math.min(1, Math.max(0, (ahead - 8.5) / 3));
+      node.scale.setScalar(floater.scale * (1 - wings * 0.12) * far * near * near * (3 - 2 * near));
     }
     for (let i = 0; i < rings.length; i++) {
       rings[i]!.rotation.z += dt * (i % 2 ? -0.05 : 0.05) * (1 + energy * 6);

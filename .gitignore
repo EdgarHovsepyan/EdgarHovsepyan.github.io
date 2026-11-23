@@ -8,3 +8,4 @@ dist-ssr
 _design
 _handoff
 *.tsbuildinfo
+__pycache__/
