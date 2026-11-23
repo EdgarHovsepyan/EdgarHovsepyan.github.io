@@ -7,7 +7,7 @@
   grid-template-rows: auto 1fr auto;
   padding: clamp(18px, 3vw, 34px) var(--gutter);
   clip-path: inset(0 0 0 0);
-  transition: clip-path 1s cubic-bezier(0.76, 0, 0.24, 1);
+  transition: clip-path 0.85s cubic-bezier(0.76, 0, 0.24, 1);
 }
 
 /* The sheet lifts from the bottom edge and the letters leave with it. */

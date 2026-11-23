@@ -12,7 +12,7 @@
 
 <h1>Edgar&nbsp;Hovsepyan</h1>
 
-<h3>Senior Game Developer&nbsp;·&nbsp;2D/3D for the Web&nbsp;&nbsp;|&nbsp;&nbsp;TypeScript · PixiJS · Three.js · WebGL/WebGPU</h3>
+<h3>Senior iGaming Engineer&nbsp;·&nbsp;Games, Platform and Tooling&nbsp;&nbsp;|&nbsp;&nbsp;PixiJS / Three.js · TypeScript · C#/.NET · Kubernetes</h3>
 
 <p>
   <b>Blank canvas → regulator-ready.</b> 7+ years shipping premium casino titles that hit
@@ -83,7 +83,7 @@
 </a>
 
 <br />
-<sub><b>Live hero</b> — cinematic scroll-out parallax over a real-time three.js shader set-piece. <a href="https://edgarhovsepyan.github.io/">See it move →</a></sub>
+<sub><b>Live hero</b> — the portrait rebuilt out of particles, over a scroll-driven three.js corridor and a raw-WebGL nebula. <a href="https://edgarhovsepyan.github.io/">See it move →</a></sub>
 
 </div>
 
@@ -173,8 +173,8 @@
 <tr>
 <td width="50%" valign="top">
 
-#### 🌌 &nbsp;Two WebGL set-pieces
-Real-time **three.js + GLSL** shader scenes, choreographed to scroll with **GSAP ScrollTrigger**. Cinematic, not decorative.
+#### 🌌 &nbsp;Three WebGL set-pieces
+A **three.js** corridor of gates the page flies through, a **particle portrait** built from the photo's pixels, and a raymarched nebula in **raw WebGL**. three.js is a lazy chunk loaded after first paint.
 
 </td>
 <td width="50%" valign="top">
@@ -261,8 +261,8 @@ Honours **`prefers-reduced-motion`** everywhere, is **iOS safe-area** aware, and
 | :--- | :--- | :--- |
 | 🖼️ **UI** | React 19 + TypeScript (strict) | Type-safe components, zero UI framework — every pixel is intentional |
 | ⚡ **Build** | Vite 6 | Instant HMR in dev, lean, tree-shaken production bundle |
-| 🌌 **WebGL** | three.js | Two custom shader set-pieces, render-gated for battery & thermals |
-| 🎞️ **Motion** | GSAP + ScrollTrigger | Scroll-scrubbed timelines, the same craft I bring to win-ceremonies |
+| 🌌 **WebGL** | three.js (lazy) + raw WebGL | Gate corridor, particle portrait and nebula; a frame-time watchdog lowers resolution, then stops, on slow machines |
+| 🎞️ **Motion** | Native scroll-driven CSS + GSAP core | `view-timeline` drives the pinned gallery, the studio iris and the career spine; GSAP only breathes the shader uniforms |
 | 🎨 **Styling** | CSS Modules + design tokens | One source of truth for colour / type / spacing — no framework |
 | 🔍 **Discovery** | JSON-LD · OG/Twitter · sitemap · robots | Recruiters and crawlers both land somewhere polished |
 | 📊 **Analytics** | GA4 (guarded) | Measured, privacy-conscious, never fires in the wrong context |
@@ -367,9 +367,10 @@ EdgarHovsepyan.github.io/
 │  │  ├─ layout/      Nav · Footer · SideRails
 │  │  ├─ sections/    Hero · Profile · Expertise · Games · Work · Awards
 │  │  │               Timeline · StatsBand · Marquee · Resume · Contact
-│  │  │               ShaderBand · ExtraStudio
+│  │  │               ExtraStudio · Resume
 │  │  └─ ui/          Reveal · Counter · Chip · SectionHeader
-│  │                  shader-lines · turbulent-flow   ← the two WebGL set-pieces
+│  │                  turbulent-flow                  ← raw-WebGL nebula
+│  ├─ three/          createGateScene · createPortraitParticles   ← lazy three.js chunk
 │  ├─ hooks/          useInView · useParallax · useParallaxVar · useScrollProgress
 │  │                  useScrollScrub · useScramble · useMagnetic · useTilt
 │  │                  useReducedMotion
@@ -427,7 +428,7 @@ end-states. Nothing important is *only* communicated through motion.
 page body never scrolls sideways; wide content scrolls inside its own container.
 
 **🎞️ Scroll as a timeline**
-GSAP ScrollTrigger pins and scrubs the horizontal *Work* gallery, while lightweight rAF-throttled hooks drive
+A sticky viewport and a native scroll-driven animation move the horizontal *Work* gallery (a swipe carousel on phones), while lightweight rAF-throttled hooks drive
 the hero scroll-out parallax, the scroll-scrub marquee and the directional reveals. Everything stays in step
 with the scroll position using **transform & opacity only** — no jank, no layout thrash.
 
@@ -492,7 +493,7 @@ environment on first run. Vercel's git integration mirrors the same commits — 
 
 <br />
 
-<sub>Designed, engineered and shipped in Yerevan, Armenia 🇦🇲 with React&nbsp;19, TypeScript, Vite, three.js & GSAP — by <b>Edgar Hovsepyan</b>.</sub>
+<sub>Designed, engineered and shipped in Yerevan, Armenia 🇦🇲 with React&nbsp;19, TypeScript, Vite, three.js & GSAP, by <b>Edgar Hovsepyan</b>.</sub>
 
 </div>
 

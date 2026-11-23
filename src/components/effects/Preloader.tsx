@@ -27,7 +27,7 @@ export function Preloader() {
 
     let frame = 0;
     const start = performance.now();
-    const duration = 1700;
+    const duration = 1150;
     const run = (now: number) => {
       const progress = Math.min((now - start) / duration, 1);
       paint(1 - Math.pow(1 - progress, 3));
@@ -40,7 +40,7 @@ export function Preloader() {
 
   useEffect(() => {
     if (!done) return;
-    const timer = setTimeout(() => setHidden(true), 1100);
+    const timer = setTimeout(() => setHidden(true), 1000);
     return () => clearTimeout(timer);
   }, [done]);
 
@@ -56,7 +56,7 @@ export function Preloader() {
       <div className={styles.mark}>
         {letters.map((letter, index) => (
           <span key={index} className={styles.slot}>
-            <span className={styles.letter} style={{ animationDelay: `${120 + index * 110}ms` }}>
+            <span className={styles.letter} style={{ animationDelay: `${60 + index * 80}ms` }}>
               {letter}
             </span>
           </span>

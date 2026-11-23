@@ -8,7 +8,16 @@ export function Footer() {
 
   return (
     <footer className={styles.footer}>
-      <img ref={watermark} className={styles.watermark} src={profile.wordmark} alt="" aria-hidden="true" />
+      <img
+        ref={watermark}
+        className={styles.watermark}
+        src={profile.wordmark}
+        alt=""
+        width={681}
+        height={586}
+        loading="lazy"
+        aria-hidden="true"
+      />
       <div className={styles.inner}>
         <div className={styles.brand}>
           <span className={styles.monogram}>{profile.initials}</span>

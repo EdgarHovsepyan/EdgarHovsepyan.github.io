@@ -19,7 +19,8 @@ export function ExtraStudio() {
   const root = useRef<HTMLElement>(null);
 
   // Reels use preload="none", so the four ~1 MB videos download nothing until
-  // the section is near the viewport, and pause again when it leaves.
+  // the section is near the viewport, and pause again when it leaves. Each has a
+  // 640px poster frame, so the wall is never black while a reel is loading.
   useEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -45,7 +46,15 @@ export function ExtraStudio() {
         <div className={styles.wall}>
           {REELS.map((src) => (
             <div key={src} className={styles.column}>
-              <video className={styles.video} src={src} muted loop playsInline preload="none" />
+              <video
+                className={styles.video}
+                src={src}
+                poster={src.replace('.mp4', '.webp')}
+                muted
+                loop
+                playsInline
+                preload="none"
+              />
             </div>
           ))}
         </div>

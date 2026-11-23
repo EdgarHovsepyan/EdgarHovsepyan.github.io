@@ -10,6 +10,7 @@
   right: var(--gutter);
   top: calc(50% - 80px);
   height: 160px;
+  width: auto;
   opacity: 0.05;
   pointer-events: none;
   will-change: transform;

@@ -51,7 +51,14 @@ export function Hero() {
 
   return (
     <header id="top" ref={hero} className={styles.hero}>
-      <img className={styles.portrait} src={profile.portrait} alt={profile.fullName} />
+      <img
+        className={styles.portrait}
+        src={profile.portrait}
+        alt={profile.fullName}
+        width={798}
+        height={833}
+        fetchPriority="high"
+      />
       <div ref={particles} className={styles.particles} aria-hidden="true" />
       <div className={styles.portraitFade} aria-hidden="true" />
       <div className={styles.glow} aria-hidden="true" />

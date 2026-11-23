@@ -14,6 +14,8 @@ function CardInner({ game }: { game: Game }) {
           className={styles.thumb}
           src={game.thumb}
           alt=""
+          width={640}
+          height={360}
           loading="lazy"
           decoding="async"
           aria-hidden="true"
