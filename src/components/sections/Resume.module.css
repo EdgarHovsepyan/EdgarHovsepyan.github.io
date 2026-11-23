@@ -298,3 +298,37 @@
     display: none;
   }
 }
+
+
+/* Phones: no fan. Four sheets in a 2 x 2 grid, each a full-size target with
+   its label and download line visible. */
+@media (max-width: 880px) {
+  .desk {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 8px 0 24px;
+  }
+
+  .sheet,
+  .sheet:nth-child(n) {
+    width: auto;
+    aspect-ratio: auto;
+    min-height: 168px;
+    margin-left: 0;
+    transform: none;
+  }
+
+  .sheet:hover,
+  .sheet:focus-visible {
+    transform: none;
+  }
+
+  .note {
+    display: block;
+  }
+
+  .foot {
+    margin-top: auto;
+  }
+}

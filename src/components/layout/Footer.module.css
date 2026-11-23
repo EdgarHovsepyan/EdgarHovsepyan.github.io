@@ -81,3 +81,17 @@
 .link:hover {
   color: var(--text);
 }
+
+
+@media (pointer: coarse) {
+  .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .links {
+    flex-wrap: wrap;
+    gap: 0 22px;
+  }
+}

@@ -304,3 +304,33 @@
     transform: translateY(0);
   }
 }
+
+
+/* The actions row needs air above it once the summary wraps to three lines. */
+.inner > .line:nth-child(8) {
+  margin-top: 30px;
+}
+
+/* Touch: text links get a full-height hit area without changing their look. */
+@media (pointer: coarse) {
+  .secondary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-bottom: 0;
+    border-bottom: 0;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.25);
+    text-underline-offset: 6px;
+  }
+
+  .actions {
+    gap: 6px 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  .inner {
+    padding-bottom: 36px;
+  }
+}

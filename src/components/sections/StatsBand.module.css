@@ -71,3 +71,12 @@
     transform: translateY(-5px);
   }
 }
+
+
+/* Phones: two tidy columns instead of a wrap that changes with the width. */
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 22px 16px;
+  }
+}
