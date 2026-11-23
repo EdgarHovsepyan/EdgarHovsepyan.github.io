@@ -367,7 +367,7 @@ EdgarHovsepyan.github.io/
 │  │  ├─ layout/      Nav · Footer · SideRails
 │  │  ├─ sections/    Hero · Profile · Expertise · Games · Work · Awards
 │  │  │               Timeline · StatsBand · Marquee · Resume · Contact
-│  │  │               ExtraStudio · Resume
+│  │  │               ExtraStudio
 │  │  └─ ui/          Reveal · Counter · Chip · SectionHeader
 │  │                  turbulent-flow                  ← raw-WebGL nebula
 │  ├─ three/          createGateScene · createPortraitParticles   ← lazy three.js chunk
