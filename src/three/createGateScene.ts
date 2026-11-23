@@ -19,6 +19,8 @@ import {
   OctahedronGeometry,
   PerspectiveCamera,
   PMREMGenerator,
+  PlaneGeometry,
+  PointLight,
   Points,
   PointsMaterial,
   Scene,
@@ -161,6 +163,12 @@ const TROPHY_PROFILE = [
 
 const PLINTH_PROFILE = [
   [0, -0.68], [0.3, -0.68], [0.31, -0.66], [0.31, -0.54], [0.28, -0.5], [0, -0.5],
+].map(([x, y]) => new Vector2(x, y));
+
+/** Brilliant-cut stone: table, crown, girdle, pavilion down to the culet.
+ *  Revolved in eight steps and flat-shaded, so every facet catches on its own. */
+const BRILLIANT_PROFILE = [
+  [0, 0.3], [0.25, 0.3], [0.45, 0.14], [0.45, 0.1], [0, -0.5],
 ].map(([x, y]) => new Vector2(x, y));
 
 /** The revolved coin, re-mapped so a flat drawing lands on each face. */
@@ -463,6 +471,8 @@ export function createGateScene(
     coin: coinGeometry(),
     trophy: new LatheGeometry(TROPHY_PROFILE, 80),
     plinth: new LatheGeometry(PLINTH_PROFILE, 64),
+    brilliant: new LatheGeometry(BRILLIANT_PROFILE, 8),
+    glint: new PlaneGeometry(1, 0.028),
     handle: new TorusGeometry(0.15, 0.02, 14, 48, Math.PI * 1.15),
     knot: new TorusKnotGeometry(0.34, 0.115, 180, 28),
     gem: new OctahedronGeometry(0.5, 0),
@@ -581,6 +591,38 @@ export function createGateScene(
       color: "#d7b26a",
       metalness: 1,
       roughness: 0.3,
+    }),
+    // The crown stone: clearer and more dispersive than the blue glass pieces.
+    diamond: mobile
+      ? new MeshPhysicalMaterial({
+          color: "#eaf2ff",
+          metalness: 0.1,
+          roughness: 0.02,
+          iridescence: 1,
+          iridescenceIOR: 2.0,
+          clearcoat: 1,
+          flatShading: true,
+        })
+      : new MeshPhysicalMaterial({
+          color: "#ffffff",
+          transmission: 1,
+          thickness: 0.9,
+          ior: 2.4,
+          dispersion: 9,
+          roughness: 0,
+          // a little light of its own, so the stone reads against the dark
+          emissive: new Color("#8fb8ff"),
+          emissiveIntensity: 0.3,
+          iridescence: 0.35,
+          clearcoat: 1,
+          flatShading: true,
+        }),
+    glint: new MeshBasicMaterial({
+      color: "#ffffff",
+      transparent: true,
+      opacity: 0.8,
+      blending: AdditiveBlending,
+      depthWrite: false,
     }),
     gate: new MeshBasicMaterial({ color: BLUE }),
     gateAlt: new MeshBasicMaterial({ color: CYAN }),
@@ -705,7 +747,9 @@ export function createGateScene(
     rings.push(ring);
 
     // The hero keeps its stage clear: the first stretch has the gate only.
-    for (let i = 0; g > 0 && i < perGate; i++) {
+    // The first stretch is the hero's and the last is the finale's: no loose
+    // pieces in either.
+    for (let i = 0; g > 0 && g < gates - 1 && i < perGate; i++) {
       const kit = kits[(g - 1) % kits.length]!;
       const mesh = kit[i % kit.length]!();
       // Keep the reading column clear: objects live left and right of centre.
@@ -765,11 +809,51 @@ export function createGateScene(
     piece.scale.setScalar(0.95);
     hand.add(piece);
   }
-  const trophy = goblet();
-  trophy.scale.setScalar(1.7);
+  // The centrepiece is the king: gold, on an obsidian plinth, with a
+  // brilliant-cut diamond hovering over the crown. The stone turns on its own
+  // axis, throws two crossed glints that twinkle out of step, and carries a
+  // small light so its colour lands on the gold beneath it.
+  const trophy = new Group();
+  const monarch = king();
+  monarch.scale.setScalar(1.45);
+  const plinth = new Mesh(geometry.plinth, material.obsidian);
+  plinth.scale.set(1.5, 1.2, 1.5);
+  plinth.position.y = -0.36;
+  trophy.add(monarch, plinth);
+  trophy.position.y = -0.25;
+
+  const stone = new Group();
+  const diamond = new Mesh(geometry.brilliant, material.diamond);
+  diamond.scale.setScalar(0.95);
+  stone.add(diamond);
+  const glints: Mesh[] = [];
+  for (const [x, y, size] of [
+    [0.3, 0.26, 1.25],
+    [-0.36, 0.04, 0.8],
+    [0.1, -0.3, 0.6],
+  ] as const) {
+    // three rays per glint, sixty degrees apart: a six-point star
+    for (const turn of [0, Math.PI / 3, (Math.PI * 2) / 3]) {
+      const ray = new Mesh(geometry.glint, material.glint);
+      ray.position.set(x, y, 0.5);
+      ray.rotation.z = turn + 0.26;
+      ray.userData.size = size;
+      ray.userData.phase = glints.length * 1.7;
+      stone.add(ray);
+      glints.push(ray);
+    }
+  }
+  const stoneLight = new PointLight(new Color("#bcd6ff"), 3.2, 4.5, 2);
+  stone.add(stoneLight);
+  stone.position.y = 1.85;
+
   const crown = new Mesh(geometry.halo, material.gate);
   crown.scale.setScalar(0.72);
-  finale.add(hand, trophy, crown);
+  // A second, smaller ring around the stone itself.
+  const aura = new Mesh(geometry.halo, material.gateAlt);
+  aura.scale.setScalar(0.24);
+  aura.position.y = 1.85;
+  finale.add(hand, trophy, stone, crown, aura);
   finale.position.set(0, 0, -(gates - 1) * GATE_SPACING - 3.6);
   scene.add(finale);
 
@@ -952,7 +1036,15 @@ export function createGateScene(
     }
     dust.rotation.z += dt * 0.012;
     hand.rotation.z += dt * (0.12 + energy * 0.9);
-    trophy.rotation.y += dt * 0.5;
+    trophy.rotation.y += dt * 0.4;
+    diamond.rotation.y -= dt * 0.9;
+    stone.position.y = 1.85 + Math.sin(clock * 0.9) * 0.06;
+    aura.position.y = stone.position.y;
+    aura.rotation.z -= dt * 0.6;
+    for (const ray of glints) {
+      const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(clock * 1.7 + (ray.userData.phase as number)));
+      ray.scale.setScalar((ray.userData.size as number) * twinkle);
+    }
     finale.position.x = 1.9 * (spread - 0.42) * 1.72;
     // On portrait screens the finale sits low, under the call to action.
     finale.position.y = -1.55 * wings;

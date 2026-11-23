@@ -66,7 +66,7 @@ The full CV is in [`CV-2026.md`](CV-2026.md), and on the site as PDF and Word.
   </tr>
   <tr>
     <td><img src=".github/media/cv.webp" alt="Four paper sheets fanned on a dark background" /><br /><sub><b>CV.</b> Four sheets dealt like a hand of cards: two files for application portals, two designed for people.</sub></td>
-    <td><img src=".github/media/finale.webp" alt="A ring of playing cards turning around a gold trophy" /><br /><sub><b>Finale.</b> Past the last gate, a ring of cards turns around the trophy behind the contact section.</sub></td>
+    <td><img src=".github/media/finale.webp" alt="A ring of playing cards turning around a gold chess king with a diamond above it" /><br /><sub><b>Finale.</b> Past the last gate, a ring of cards turns around a gold king with a diamond over its crown, behind the contact section.</sub></td>
   </tr>
 </table>
 
