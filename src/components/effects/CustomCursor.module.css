@@ -1,17 +1,64 @@
+/* The outer element only carries position (set every frame from JS); the disc
+   inside it carries size, colour and the word, so the two never fight. */
 .ring {
   position: fixed;
   left: 0;
   top: 0;
-  width: 30px;
-  height: 30px;
-  margin: -15px 0 0 -15px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 50%;
+  width: 0;
+  height: 0;
   z-index: 300;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s;
-  mix-blend-mode: difference;
+}
+
+.disc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  background: transparent;
+  transition:
+    width 0.35s var(--ease),
+    height 0.35s var(--ease),
+    background-color 0.25s,
+    border-color 0.25s;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0a0a0e;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* Over a plain link or button: the ring tightens around the dot. */
+.tight .disc {
+  width: 16px;
+  height: 16px;
+  border-color: var(--accent-blue-soft);
+}
+
+/* Over something that names its action: a solid gold disc with the word. */
+.word .disc {
+  width: 84px;
+  height: 84px;
+  border-color: var(--gold);
+  background: var(--gold);
+}
+
+.word .label {
+  opacity: 1;
 }
 
 .dot {
@@ -30,7 +77,11 @@
   mix-blend-mode: difference;
 }
 
-/* Custom cursor is meaningless on touch devices — hide it there. */
+.dot.hide {
+  opacity: 0 !important;
+}
+
+/* Custom cursor is meaningless on touch devices: hide it there. */
 @media (hover: none), (pointer: coarse) {
   .ring,
   .dot {

@@ -48,7 +48,7 @@ export function Contact() {
           </h2>
         </Reveal>
         <Reveal className={styles.actions}>
-          <a ref={cta} href={mailto} className={styles.primary}>
+          <a ref={cta} href={mailto} className={styles.primary} data-cursor="Write">
             Start a conversation
             <span className={styles.arrow} aria-hidden="true">
               →

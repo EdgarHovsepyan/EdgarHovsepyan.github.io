@@ -42,6 +42,7 @@ export function Resume() {
               key={file.href}
               href={file.href}
               download
+              data-cursor="Get"
               className={file.dark ? `${styles.sheet} ${styles.dark}` : styles.sheet}
               aria-label={`Download the ${file.name} CV as ${file.format}`}
             >

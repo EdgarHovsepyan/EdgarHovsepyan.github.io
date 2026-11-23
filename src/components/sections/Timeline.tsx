@@ -21,6 +21,7 @@ function TimelineRow({ entry, index }: RowProps) {
       role="button"
       tabIndex={0}
       aria-expanded={open}
+      data-cursor={open ? 'Close' : 'Open'}
       aria-label={`${entry.role}, ${entry.org}, ${entry.period}`}
       onClick={() => setOpen((value) => !value)}
       onKeyDown={(event) => {

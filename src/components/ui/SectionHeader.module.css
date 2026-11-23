@@ -17,24 +17,48 @@
   text-transform: uppercase;
 }
 
-/* Surreal dream reflection: every title mirrors upside-down beneath itself,
-   fading like a reflection in still dream-water. Pure CSS, no layout cost. */
+/* A hard rule under every title, drawn from the left as the title arrives,
+   and the title itself wiped in behind a mask. */
 .heading::after {
-  content: attr(data-text);
-  position: absolute;
-  left: 0;
-  top: 100%;
-  width: 100%;
-  transform: scaleY(-1) translateY(-4px);
-  transform-origin: top;
-  opacity: 0.1;
-  background: linear-gradient(0deg, var(--text) 10%, transparent 75%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  filter: blur(1px);
-  pointer-events: none;
-  user-select: none;
+  content: '';
+  display: block;
+  width: clamp(64px, 9vw, 150px);
+  height: 5px;
+  margin-top: 0.16em;
+  background: var(--accent);
+  transform-origin: left;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: 0% 100%)) {
+    .heading {
+      animation: wipe linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 90%;
+    }
+
+    .heading::after {
+      animation: rule linear both;
+      animation-timeline: view();
+      animation-range: entry 40% cover 22%;
+    }
+  }
+}
+
+@keyframes wipe {
+  from {
+    clip-path: inset(0 100% -0.4em 0);
+  }
+  to {
+    clip-path: inset(0 0 -0.4em 0);
+  }
+}
+
+@keyframes rule {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}

@@ -85,6 +85,7 @@ export function Games() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cx(styles.card, game.featured && styles.featured)}
+                data-cursor="Play"
                 aria-label={`Play ${game.name}, ${game.type}, fun-mode demo`}
               >
                 <CardInner game={game} />
