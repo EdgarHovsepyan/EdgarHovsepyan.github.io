@@ -1,38 +1,38 @@
-/* A normal full-height section (no sticky pin) — it scrolls through the viewport
-   like everything else, and the scroll effects (blur focus + parallax) are driven
-   by a scrubbed timeline, not a pin, so the page never feels stuck. */
 .section {
   position: relative;
   z-index: 2;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow: hidden;
+  min-height: 120vh;
+  min-height: 120dvh;
+  overflow: clip;
   display: flex;
-  align-items: flex-end;
-  background: radial-gradient(circle at 50% 38%, #181031, #07070a 72%);
+  background: #050509;
+  view-timeline: --studio block;
 }
 
-/* Slightly larger than the section so the parallax drift never reveals the edges. */
-.grid {
+/* The lens. Closed to a small disc at rest only where scroll-driven animation
+   can open it again; everywhere else it is simply open. */
+.iris {
   position: absolute;
-  inset: -6%;
+  inset: 0;
   z-index: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 2px;
-  will-change: transform, filter;
-  transform: translateZ(0);
 }
 
-.cell {
+.wall {
+  position: absolute;
+  inset: -12% -2%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+.column {
   position: relative;
   overflow: hidden;
   background: #0a0a12;
 }
 
-/* Blown up ~16% and anchored top-left so the generator's ✦ watermark in each
-   clip's bottom-right corner is cropped clean away (overflow: hidden on .cell). */
+/* Blown up ~16% and anchored top-left so the generator's watermark in each
+   clip's bottom-right corner is cropped clean away. */
 .video {
   position: absolute;
   top: 0;
@@ -44,65 +44,24 @@
   display: block;
 }
 
-.shine {
-  position: absolute;
-  top: -12%;
-  bottom: -12%;
-  left: -35%;
-  width: 26%;
-  z-index: 1;
-  pointer-events: none;
-  /* Composited sweep: animate transform (GPU) instead of `left` (which forces a
-     layout on every frame — flagged by Lighthouse). translateX is in element
-     widths (26% of the section), so 654% ≈ the old -35% → 135% travel. */
-  transform: translateX(0) skewX(-12deg);
-  will-change: transform;
-  mix-blend-mode: screen;
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.05) 38%,
-    rgba(255, 238, 184, 0.22) 50%,
-    rgba(255, 255, 255, 0.05) 62%,
-    transparent 100%
-  );
-  animation: shineSweep 7s ease-in-out infinite;
-}
-
-@keyframes shineSweep {
-  0% {
-    transform: translateX(0) skewX(-12deg);
-  }
-  16%,
-  100% {
-    transform: translateX(654%) skewX(-12deg);
-  }
-}
-
 .scrim {
   position: absolute;
   inset: 0;
-  z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(
-      180deg,
-      rgba(7, 7, 10, 0.62) 0%,
-      transparent 20%,
-      transparent 46%,
-      rgba(7, 7, 10, 0.94) 100%
-    ),
-    radial-gradient(120% 90% at 50% 42%, transparent 40%, rgba(7, 7, 10, 0.55) 100%);
+    linear-gradient(180deg, rgba(5, 5, 9, 0.7) 0%, rgba(5, 5, 9, 0.25) 30%, rgba(5, 5, 9, 0.35) 55%, rgba(5, 5, 9, 0.96) 100%),
+    radial-gradient(120% 90% at 50% 45%, transparent 35%, rgba(5, 5, 9, 0.6) 100%);
 }
 
 .content {
   position: relative;
-  z-index: 2;
+  z-index: 1;
+  width: 100%;
   max-width: var(--shell);
   margin: 0 auto;
-  width: 100%;
-  padding: 0 var(--gutter) clamp(48px, 8vw, 96px);
-  will-change: transform;
+  padding: clamp(110px, 16vh, 180px) var(--gutter) clamp(56px, 8vw, 110px);
+  display: flex;
+  flex-direction: column;
 }
 
 .kicker {
@@ -111,92 +70,183 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--gold);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
+/* The title runs the full width of the wall: one line solid, one line drawn in
+   outline so the reels show through it. */
 .title {
-  margin-top: 12px;
+  margin: auto 0;
+  padding: clamp(24px, 6vh, 70px) 0;
   font-family: var(--font-cond);
-  font-size: clamp(40px, 7vw, 92px);
-  font-weight: 800;
+  font-size: clamp(60px, 15vw, 260px);
+  font-weight: 900;
+  line-height: 0.84;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
-  line-height: 0.92;
-  color: var(--text);
-  text-wrap: balance;
-  text-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.9),
-    0 6px 32px rgba(0, 0, 0, 0.75);
+}
+
+.line {
+  display: block;
+  white-space: nowrap;
+  text-shadow: 0 10px 60px rgba(0, 0, 0, 0.55);
+}
+
+.hollow {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--text);
+  text-shadow: none;
+  text-align: right;
+}
+
+.foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: clamp(24px, 5vw, 80px);
+  align-items: end;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .caption {
-  margin-top: 20px;
-  max-width: 660px;
-  font-family: var(--font-cond);
-  font-size: clamp(20px, 2.6vw, 32px);
+  font-size: clamp(20px, 2.2vw, 32px);
   font-weight: 600;
   line-height: 1.2;
   color: var(--text);
-  text-wrap: pretty;
-  text-shadow:
-    0 1px 4px rgba(0, 0, 0, 0.9),
-    0 3px 18px rgba(0, 0, 0, 0.7);
 }
 
 .caption strong {
   color: var(--gold);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .body {
   margin-top: 14px;
-  max-width: 60ch;
-  font-family: var(--font-sans);
-  font-size: clamp(14px, 1.7vw, 17px);
-  line-height: 1.6;
+  max-width: 620px;
+  font-size: clamp(14px, 1.25vw, 17px);
+  line-height: 1.65;
   color: var(--text-secondary);
   text-wrap: pretty;
-  text-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.95),
-    0 2px 12px rgba(0, 0, 0, 0.8);
 }
 
 .tags {
-  margin-top: 22px;
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .tags span {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 100px;
+  background: rgba(5, 5, 9, 0.5);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 7px 13px;
-  border: 1px solid var(--line-strong);
-  border-radius: 100px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(2px);
+  color: var(--text-secondary);
 }
 
-/* Phones: a lighter 2-reel stack (the IntersectionObserver skips the hidden
-   cells, so only two videos ever decode). */
-@media (max-width: 700px) {
-  .grid {
-    grid-template-columns: 1fr;
+/* Scroll choreography. Opt-in: motion allowed AND scroll timelines supported. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+    .iris {
+      animation: irisOpen linear both;
+      animation-timeline: --studio;
+      animation-range: entry 15% cover 42%;
+    }
+
+    .column:nth-child(odd) {
+      animation: slideUp linear both;
+      animation-timeline: --studio;
+      animation-range: entry 0% exit 100%;
+    }
+
+    .column:nth-child(even) {
+      animation: slideDown linear both;
+      animation-timeline: --studio;
+      animation-range: entry 0% exit 100%;
+    }
+
+    .line:first-child {
+      animation: pushLeft linear both;
+      animation-timeline: --studio;
+      animation-range: entry 20% exit 80%;
+    }
+
+    .hollow {
+      animation: pushRight linear both;
+      animation-timeline: --studio;
+      animation-range: entry 20% exit 80%;
+    }
+  }
+}
+
+@keyframes irisOpen {
+  from {
+    clip-path: circle(9% at 50% 46%);
+  }
+  to {
+    clip-path: circle(85% at 50% 46%);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(7%);
+  }
+  to {
+    transform: translateY(-7%);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-7%);
+  }
+  to {
+    transform: translateY(7%);
+  }
+}
+
+@keyframes pushLeft {
+  from {
+    transform: translateX(6%);
+  }
+  to {
+    transform: translateX(-4%);
+  }
+}
+
+@keyframes pushRight {
+  from {
+    transform: translateX(-7%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 820px) {
+  .section {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .wall {
+    grid-template-columns: repeat(2, 1fr);
     grid-template-rows: 1fr 1fr;
   }
 
-  .cell:nth-child(n + 3) {
-    display: none;
+  .hollow {
+    -webkit-text-stroke-width: 1.5px;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .shine {
-    animation: none;
-    opacity: 0.25;
+  .foot {
+    grid-template-columns: 1fr;
+  }
+
+  .tags {
+    justify-content: flex-start;
   }
 }

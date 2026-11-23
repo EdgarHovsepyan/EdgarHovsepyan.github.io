@@ -3,60 +3,133 @@
   z-index: 2;
   max-width: var(--shell);
   margin: 0 auto;
-  /* Top padding so THE STACK doesn't sit flush on the 360° scene's seam. */
-  padding: clamp(70px, 10vw, 120px) var(--gutter) clamp(80px, 12vw, 140px);
+  padding: clamp(80px, 11vw, 140px) var(--gutter) clamp(80px, 12vw, 140px);
 }
 
 .header {
   margin-bottom: clamp(36px, 5vw, 60px);
 }
 
-.grid {
+.console {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: clamp(14px, 1.6vw, 20px);
-  grid-auto-flow: dense;
+  grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 48px);
   align-items: start;
 }
 
-.wide {
-  grid-column: span 2;
+/* --- tablist ------------------------------------------------------------ */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line-strong);
 }
 
-.cell {
+.tab {
   position: relative;
-  height: 100%;
-  padding: clamp(24px, 2.4vw, 34px);
-  border-radius: 18px;
-  border: 1px solid var(--line-strong);
-  background: linear-gradient(160deg, rgba(18, 18, 24, 0.85), rgba(11, 11, 15, 0.6));
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 13px 14px 13px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  background: none;
+  color: var(--text-muted-2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   transition:
-    transform 0.5s var(--ease),
-    border-color 0.4s;
-  transform-style: preserve-3d;
+    color 0.3s,
+    background-color 0.3s;
 }
 
-.accent {
-  border-color: rgba(77, 124, 255, 0.28);
-  background: linear-gradient(155deg, rgba(30, 42, 82, 0.55), rgba(12, 14, 24, 0.7));
-}
-
-.label {
+.tabNo,
+.tabCount {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.1em;
   color: var(--text-faint);
 }
 
-.accent .label {
+.tabLabel {
+  font-family: var(--font-cond);
+  font-size: clamp(17px, 1.5vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Selected: not colour alone. A bar drawn with a border (so it survives forced
+   colours) marks the row, and it takes no space. */
+.tab::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-inline-start: 3px solid var(--accent);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.35s var(--ease);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--text);
+  background-color: rgba(77, 124, 255, 0.08);
+}
+
+.tab[aria-selected='true']::before {
+  transform: scaleY(1);
+}
+
+.tab[aria-selected='true'] .tabNo,
+.tab[aria-selected='true'] .tabCount {
   color: var(--accent-blue-soft);
 }
 
+/* --- stage -------------------------------------------------------------- */
+.stage {
+  position: sticky;
+  top: 96px;
+  min-height: clamp(420px, 60vh, 620px);
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  background: linear-gradient(155deg, rgba(22, 28, 52, 0.7), rgba(10, 11, 18, 0.72));
+  overflow: hidden;
+}
+
+/* Padding lives on the inner wrapper, never on the panel itself. */
+.panelInner {
+  position: relative;
+  padding: clamp(26px, 3.4vw, 52px);
+}
+
+.ghost {
+  position: absolute;
+  right: -0.03em;
+  top: -0.16em;
+  font-family: var(--font-cond);
+  font-size: clamp(180px, 24vw, 380px);
+  font-weight: 900;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(159, 184, 255, 0.22);
+  pointer-events: none;
+  user-select: none;
+}
+
+.label {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
 .title {
-  margin: 18px 0 0;
-  font-size: clamp(20px, 2vw, 27px);
+  position: relative;
+  margin: 16px 0 0;
+  max-width: 20ch;
+  font-size: clamp(22px, 2.4vw, 34px);
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.15;
@@ -64,79 +137,108 @@
 }
 
 .body {
-  margin: 14px 0 0;
-  font-size: 14.5px;
+  position: relative;
+  margin: 12px 0 0;
+  max-width: 560px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--text-muted);
-  max-width: 520px;
   text-wrap: pretty;
 }
 
-.chips {
-  margin-top: 18px;
+/* The skills themselves, set as display type instead of small chips. */
+.words {
+  position: relative;
+  margin: clamp(22px, 3vw, 40px) 0 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  gap: 0.18em 0.55em;
+  font-family: var(--font-cond);
+  font-size: clamp(26px, 3.5vw, 58px);
+  font-weight: 800;
+  line-height: 1.05;
+  text-transform: uppercase;
 }
 
-.chipsBig {
-  margin-top: 22px;
+.word {
+  color: var(--text);
 }
 
-/* On narrow screens use a single column: the `span 2` wide cells would otherwise
-   force a 2-column grid wider than the viewport (horizontal-overflow bug). */
-@media (max-width: 640px) {
-  .grid {
+.word:nth-child(3n + 2) {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--accent-blue-soft);
+}
+
+.word:not(:last-child)::after {
+  content: '/';
+  margin-left: 0.55em;
+  color: var(--gold);
+  -webkit-text-stroke: 0;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .word {
+    animation: rise 0.6s var(--ease) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Narrow screens: the tablist becomes one scrolling row above the stage. */
+@media (max-width: 880px) {
+  .console {
     grid-template-columns: 1fr;
   }
 
-  .wide {
-    grid-column: auto;
+  .tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    border-top: 0;
+    border-bottom: 1px solid var(--line-strong);
+    scrollbar-width: none;
+    scroll-padding-inline: 24px;
+    -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, #000 88%, transparent);
   }
-}
 
+  .tab {
+    flex: none;
+    grid-template-columns: auto auto;
+    padding: 12px 16px;
+    border-bottom: 0;
+  }
 
-/* Travelling light: useSpotlight writes the cursor position into --mx / --my on
-   every card, and this ring + pool pick it up. The ring is a masked border, so
-   the edge nearest the cursor lights first. */
-.cell::before,
-.cell::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.45s var(--ease);
-  z-index: 3;
-}
+  .tabCount {
+    display: none;
+  }
 
-.cell::before {
-  padding: 1px;
-  background: radial-gradient(
-    340px circle at var(--mx, -400px) var(--my, -400px),
-    rgba(159, 184, 255, 0.95),
-    rgba(34, 211, 238, 0.35) 40%,
-    transparent 70%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-}
+  .tab::before {
+    inset: auto 0 0 0;
+    border-inline-start: 0;
+    border-block-end: 3px solid var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
 
-.cell::after {
-  background: radial-gradient(
-    420px circle at var(--mx, -400px) var(--my, -400px),
-    rgba(77, 124, 255, 0.13),
-    transparent 65%
-  );
-}
+  .tab[aria-selected='true']::before {
+    transform: scaleX(1);
+  }
 
-.grid[data-lit] .cell::before,
-.grid[data-lit] .cell::after {
-  opacity: 1;
+  .stage {
+    position: static;
+    min-height: 380px;
+  }
 }
