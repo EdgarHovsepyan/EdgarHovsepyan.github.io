@@ -4,7 +4,7 @@ export const profile = {
   wordmarkAlt: 'ԷԴԳԱՐ',
   fullName: 'Edgar Hovsepyan',
   initials: 'Է|Հ',
-  title: 'Senior Game Developer · 2D/3D for the Web',
+  title: 'Senior Game Platform Engineer · iGaming',
   badge: '✦ SBC Americas 2025 GotY Shortlist · BFTH Arena 2024 Finalist',
   location: 'Yerevan, Armenia · Remote worldwide / on-site',
   email: 'edgarhovsepyan94@gmail.com',

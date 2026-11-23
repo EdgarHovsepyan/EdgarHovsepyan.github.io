@@ -1,5 +1,8 @@
 import {
   ACESFilmicToneMapping,
+  AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
   CanvasTexture,
   Color,
   CapsuleGeometry,
@@ -13,6 +16,8 @@ import {
   OctahedronGeometry,
   PerspectiveCamera,
   PMREMGenerator,
+  Points,
+  PointsMaterial,
   Scene,
   SphereGeometry,
   SRGBColorSpace,
@@ -118,6 +123,7 @@ interface Floater {
   spin: [number, number, number];
   bob: number;
   phase: number;
+  scale: number;
 }
 
 export function createGateScene(mount: HTMLElement, options: GateSceneOptions): GateScene | null {
@@ -128,6 +134,16 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     renderer = new WebGLRenderer({ alpha: true, antialias: !mobile, powerPreference: 'high-performance' });
   } catch {
     return null; // no WebGL — the CSS backdrop stays on its own
+  }
+  // No GPU, no corridor: a software rasteriser would turn every frame into
+  // main-thread work. `?gl=force` overrides this for review and tests.
+  const force = window.location.search.includes('gl=force');
+  const context = renderer.getContext();
+  const info = context.getExtension('WEBGL_debug_renderer_info');
+  const gpu = info ? String(context.getParameter(info.UNMASKED_RENDERER_WEBGL) ?? '') : '';
+  if (!force && /swiftshader|llvmpipe|software|basic render/i.test(gpu)) {
+    renderer.dispose();
+    return null;
   }
   renderer.setClearAlpha(0);
   renderer.toneMapping = ACESFilmicToneMapping;
@@ -164,6 +180,8 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     pill: new CapsuleGeometry(0.2, 0.55, 8, 28),
     gate: new TorusGeometry(3.3, 0.012, 8, 160, Math.PI * 1.72),
     halo: new TorusGeometry(3.42, 0.004, 6, 160),
+    // A fat, faint, additive twin of the gate: bloom without a post pass.
+    glow: new TorusGeometry(3.3, 0.09, 8, 160, Math.PI * 1.72),
   };
   // Real refraction on desktop; phones get an iridescent solid instead of the
   // extra transmission pass.
@@ -206,6 +224,20 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     gate: new MeshBasicMaterial({ color: BLUE }),
     gateAlt: new MeshBasicMaterial({ color: CYAN }),
     halo: new MeshBasicMaterial({ color: '#9fb8ff', transparent: true, opacity: 0.35 }),
+    glow: new MeshBasicMaterial({
+      color: BLUE,
+      transparent: true,
+      opacity: 0.16,
+      blending: AdditiveBlending,
+      depthWrite: false,
+    }),
+    glowAlt: new MeshBasicMaterial({
+      color: CYAN,
+      transparent: true,
+      opacity: 0.13,
+      blending: AdditiveBlending,
+      depthWrite: false,
+    }),
   };
 
   const makers: (() => Mesh)[] = [
@@ -230,6 +262,7 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     const ring = new Group();
     ring.add(new Mesh(geometry.gate, g % 2 ? material.gateAlt : material.gate));
     ring.add(new Mesh(geometry.halo, material.halo));
+    ring.add(new Mesh(geometry.glow, g % 2 ? material.glowAlt : material.glow));
     ring.position.z = z;
     ring.rotation.z = random() * Math.PI * 2;
     scene.add(ring);
@@ -240,11 +273,12 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
       const mesh = makers[made++ % makers.length]!();
       // Keep the reading column clear: objects live left and right of centre.
       const side = (g + i) % 2 ? 1 : -1;
-      const x = side * (2.3 + random() * 1.9);
+      const x = side * (2.6 + random() * 1.8);
       const y = (random() - 0.5) * 3.2;
       mesh.position.set(x, y, z - 1.2 - random() * (GATE_SPACING - 2.4));
       mesh.rotation.set(random() * 6.28, random() * 6.28, random() * 6.28);
-      mesh.scale.setScalar(0.9 + random() * 0.8);
+      const scale = 0.9 + random() * 0.8;
+      mesh.scale.setScalar(scale);
       scene.add(mesh);
       floaters.push({
         node: mesh,
@@ -252,19 +286,48 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
         spin: [(random() - 0.5) * 0.5, (random() - 0.5) * 0.6, (random() - 0.5) * 0.3],
         bob: 0.08 + random() * 0.16,
         phase: random() * 6.28,
+        scale,
       });
     }
   }
+
+  // Dust: thousands of motes down the whole corridor. They carry the sense of
+  // speed and depth for almost nothing — one draw call.
+  const dustCount = mobile ? 700 : 2200;
+  const dustPosition = new Float32Array(dustCount * 3);
+  const length = gates * GATE_SPACING + 8;
+  for (let i = 0; i < dustCount; i++) {
+    const angle = random() * Math.PI * 2;
+    const radius = 0.9 + random() * 5.2;
+    dustPosition[i * 3] = Math.cos(angle) * radius;
+    dustPosition[i * 3 + 1] = Math.sin(angle) * radius * 0.7;
+    dustPosition[i * 3 + 2] = 6 - random() * length;
+  }
+  const dustGeometry = new BufferGeometry();
+  dustGeometry.setAttribute('position', new BufferAttribute(dustPosition, 3));
+  const dustMaterial = new PointsMaterial({
+    color: '#a9c1ff',
+    size: 0.035,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0.7,
+    blending: AdditiveBlending,
+    depthWrite: false,
+  });
+  const dust = new Points(dustGeometry, dustMaterial);
+  dust.frustumCulled = false;
+  scene.add(dust);
 
   const travel = (gates - 1) * GATE_SPACING + 3;
   const startZ = 5.5;
 
   // --- sizing -----------------------------------------------------------
   let spread = 1;
+  let quality = 1; // drops when frames run long, see loop()
   const resize = () => {
     const width = mount.clientWidth || 1;
     const height = mount.clientHeight || 1;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5) * quality);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
@@ -308,23 +371,45 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
       node.rotation.y += spin[1] * dt * (1 + energy * 4);
       node.rotation.z += spin[2] * dt;
       node.position.y = floater.baseY + Math.sin(clock * 0.5 + floater.phase) * floater.bob;
+      // Pieces shrink away as the camera reaches them, so nothing ever fills
+      // the screen in front of the text.
+      const ahead = camera.position.z - node.position.z;
+      const near = Math.min(1, Math.max(0, (ahead - 1.6) / 3.2));
+      node.scale.setScalar(floater.scale * near * near * (3 - 2 * near));
     }
     for (let i = 0; i < rings.length; i++) {
       rings[i]!.rotation.z += dt * (i % 2 ? -0.05 : 0.05) * (1 + energy * 6);
     }
+    dust.rotation.z += dt * 0.012;
     renderer.render(scene, camera);
   };
 
   let frame = 0;
   let previous = 0;
+  let slow = 0;
   const loop = (now: number) => {
     frame = requestAnimationFrame(loop);
     if (document.hidden) {
       previous = 0;
       return;
     }
-    const dt = previous ? Math.min(0.05, (now - previous) / 1000) : 0.016;
+    const elapsed = previous ? now - previous : 16;
+    const dt = Math.min(0.05, elapsed / 1000);
     previous = now;
+    // Watchdog: if frames keep running past 34ms, halve the resolution once;
+    // if that is not enough either, stop drawing and leave the CSS backdrop.
+    slow = elapsed > 34 ? slow + 1 : Math.max(0, slow - 2);
+    if (slow > 90) {
+      slow = 0;
+      if (quality === 1) {
+        quality = 0.6;
+        resize();
+      } else {
+        cancelAnimationFrame(frame);
+        mount.style.opacity = '0';
+        return;
+      }
+    }
     render(dt);
   };
 
@@ -370,6 +455,8 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
         if (Array.isArray(item)) item.forEach(dispose);
         else dispose(item);
       }
+      dustGeometry.dispose();
+      dustMaterial.dispose();
       environment.dispose();
       pmrem.dispose();
       renderer.dispose();
