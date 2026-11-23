@@ -3,57 +3,99 @@
   inset: 0;
   z-index: 200;
   background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 30px;
-  transition:
-    opacity 0.9s ease,
-    visibility 0.9s;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: clamp(18px, 3vw, 34px) var(--gutter);
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1s cubic-bezier(0.76, 0, 0.24, 1);
 }
 
+/* The sheet lifts from the bottom edge and the letters leave with it. */
 .gone {
-  opacity: 0;
-  visibility: hidden;
-  /* Stop the fading full-screen overlay from swallowing clicks (e.g. the hero
-     "Start a conversation" CTA) during its 0.9s fade-out, before it unmounts. */
+  clip-path: inset(0 0 100% 0);
+  /* Never swallow clicks (e.g. the hero CTA) while the curtain is leaving. */
   pointer-events: none;
-}
-
-.mark {
-  font-family: var(--font-arm);
-  font-size: clamp(46px, 9vw, 96px);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--text);
-  line-height: 1;
-}
-
-.track {
-  width: min(70vw, 360px);
-  height: 1px;
-  background: rgba(255, 255, 255, 0.12);
-  position: relative;
-  overflow: hidden;
 }
 
 .bar {
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0;
+  inset: 0 0 auto;
+  height: 2px;
   background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+  transform: scaleX(0);
+  transform-origin: left;
 }
 
-.meta {
+.top,
+.bottom {
   display: flex;
   justify-content: space-between;
-  width: min(70vw, 360px);
+  align-items: flex-end;
+  gap: 20px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: #6a6a73;
   text-transform: uppercase;
+  color: var(--text-muted-3);
+}
+
+.mark {
+  align-self: center;
+  justify-self: center;
+  display: flex;
+  gap: 0.04em;
+  font-family: var(--font-arm);
+  font-size: clamp(64px, 17vw, 260px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+
+.slot {
+  display: block;
+  overflow: hidden;
+  padding: 0.08em 0;
+}
+
+.letter {
+  display: block;
+  transform: translateY(115%);
+  animation: dealIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.gone .letter {
+  transition: translate 0.7s cubic-bezier(0.76, 0, 0.24, 1);
+  translate: 0 -40%;
+}
+
+.count {
+  font-family: var(--font-cond);
+  font-size: clamp(56px, 11vw, 150px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.8;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes dealIn {
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    transition: opacity 0.3s;
+  }
+
+  .gone {
+    clip-path: none;
+    opacity: 0;
+  }
+
+  .letter {
+    transform: none;
+    animation: none;
+  }
 }

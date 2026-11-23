@@ -193,10 +193,3 @@
     transform: translate(-50%, calc(-50% - 16px + var(--py, 0px)));
   }
 }
-
-
-/* Perf: skip layout/paint for this section until it nears the viewport. */
-.section {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 900px;
-}

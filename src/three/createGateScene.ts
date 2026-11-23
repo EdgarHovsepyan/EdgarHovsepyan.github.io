@@ -7,6 +7,8 @@ import {
   Color,
   CapsuleGeometry,
   DirectionalLight,
+  DoubleSide,
+  ExtrudeGeometry,
   Fog,
   Group,
   LatheGeometry,
@@ -21,17 +23,20 @@ import {
   Scene,
   SphereGeometry,
   SRGBColorSpace,
+  Shape,
+  ShapeGeometry,
   TorusGeometry,
   TorusKnotGeometry,
   Vector2,
+  Vector3,
   WebGLRenderer,
-} from 'three';
-import type { Material, Object3D } from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+} from "three";
+import type { Material, Object3D } from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 // The page as a flight: one luminous gate per chapter, and between the gates the
-// things the work is made of — obsidian dice, gold coins, chrome, cut glass. Scroll moves
+// things the work is made of — black-and-gold cards, obsidian dice, coins, glass. Scroll moves
 // the camera down the corridor; the cursor leans it. Everything is procedural
 // (no model downloads) and the whole module is loaded lazily after first paint.
 
@@ -45,9 +50,9 @@ export interface GateScene {
   dispose: () => void;
 }
 
-const BLUE = '#4d7cff';
-const CYAN = '#22d3ee';
-const GOLD = '#e5c07b';
+const BLUE = "#4d7cff";
+const CYAN = "#22d3ee";
+const GOLD = "#e5c07b";
 const GATE_SPACING = 9;
 
 /** Small deterministic PRNG so the layout is identical on every visit. */
@@ -62,11 +67,15 @@ function mulberry(seed: number) {
   };
 }
 
-function texture(size: number, height: number, paint: (c: CanvasRenderingContext2D) => void) {
-  const canvas = document.createElement('canvas');
+function texture(
+  size: number,
+  height: number,
+  paint: (c: CanvasRenderingContext2D) => void,
+) {
+  const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = height;
-  const context = canvas.getContext('2d');
+  const context = canvas.getContext("2d");
   if (context) paint(context);
   const map = new CanvasTexture(canvas);
   map.colorSpace = SRGBColorSpace;
@@ -76,11 +85,36 @@ function texture(size: number, height: number, paint: (c: CanvasRenderingContext
 
 const PIPS: Record<number, [number, number][]> = {
   1: [[0.5, 0.5]],
-  2: [[0.27, 0.27], [0.73, 0.73]],
-  3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
-  4: [[0.27, 0.27], [0.73, 0.27], [0.27, 0.73], [0.73, 0.73]],
-  5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
-  6: [[0.28, 0.22], [0.72, 0.22], [0.28, 0.5], [0.72, 0.5], [0.28, 0.78], [0.72, 0.78]],
+  2: [
+    [0.27, 0.27],
+    [0.73, 0.73],
+  ],
+  3: [
+    [0.25, 0.25],
+    [0.5, 0.5],
+    [0.75, 0.75],
+  ],
+  4: [
+    [0.27, 0.27],
+    [0.73, 0.27],
+    [0.27, 0.73],
+    [0.73, 0.73],
+  ],
+  5: [
+    [0.25, 0.25],
+    [0.75, 0.25],
+    [0.5, 0.5],
+    [0.25, 0.75],
+    [0.75, 0.75],
+  ],
+  6: [
+    [0.28, 0.22],
+    [0.72, 0.22],
+    [0.28, 0.5],
+    [0.72, 0.5],
+    [0.28, 0.78],
+    [0.72, 0.78],
+  ],
 };
 
 // Obsidian die with inlaid gold pips that carry a faint glow of their own.
@@ -99,9 +133,9 @@ function dieMaterials() {
         }
       });
     return new MeshPhysicalMaterial({
-      map: paint('#090b12', GOLD),
+      map: paint("#090b12", GOLD),
       emissive: new Color(GOLD),
-      emissiveMap: paint('#000000', '#ffffff'),
+      emissiveMap: paint("#000000", "#ffffff"),
       emissiveIntensity: 0.55,
       roughness: 0.14,
       metalness: 0.3,
@@ -113,9 +147,172 @@ function dieMaterials() {
 
 /** Coin cross-section, revolved: a raised rim around a recessed face. */
 const COIN_PROFILE = [
-  [0, 0.035], [0.3, 0.035], [0.33, 0.06], [0.44, 0.06], [0.465, 0.035],
-  [0.465, -0.035], [0.44, -0.06], [0.33, -0.06], [0.3, -0.035], [0, -0.035],
+  [0, 0.035],
+  [0.3, 0.035],
+  [0.33, 0.06],
+  [0.44, 0.06],
+  [0.465, 0.035],
+  [0.465, -0.035],
+  [0.44, -0.06],
+  [0.33, -0.06],
+  [0.3, -0.035],
+  [0, -0.035],
 ].map(([x, y]) => new Vector2(x, y));
+
+// --- playing cards: black stock, gold and blue ink ---------------------------
+type Suit = "spade" | "heart" | "diamond" | "club";
+const CARD_W = 0.78;
+const CARD_H = 1.1;
+const PALE_BLUE = "#8fb0ff";
+
+function drawSuit(
+  c: CanvasRenderingContext2D,
+  suit: Suit,
+  cx: number,
+  cy: number,
+  s: number,
+) {
+  c.beginPath();
+  if (suit === "heart") {
+    c.moveTo(cx, cy + s * 0.45);
+    c.bezierCurveTo(
+      cx - s * 0.9,
+      cy - s * 0.15,
+      cx - s * 0.45,
+      cy - s * 0.75,
+      cx,
+      cy - s * 0.3,
+    );
+    c.bezierCurveTo(
+      cx + s * 0.45,
+      cy - s * 0.75,
+      cx + s * 0.9,
+      cy - s * 0.15,
+      cx,
+      cy + s * 0.45,
+    );
+  } else if (suit === "diamond") {
+    c.moveTo(cx, cy - s * 0.55);
+    c.lineTo(cx + s * 0.4, cy);
+    c.lineTo(cx, cy + s * 0.55);
+    c.lineTo(cx - s * 0.4, cy);
+  } else {
+    if (suit === "spade") {
+      c.moveTo(cx, cy - s * 0.55);
+      c.bezierCurveTo(
+        cx + s * 0.9,
+        cy + s * 0.05,
+        cx + s * 0.45,
+        cy + s * 0.6,
+        cx,
+        cy + s * 0.2,
+      );
+      c.bezierCurveTo(
+        cx - s * 0.45,
+        cy + s * 0.6,
+        cx - s * 0.9,
+        cy + s * 0.05,
+        cx,
+        cy - s * 0.55,
+      );
+    } else {
+      for (const [x, y] of [
+        [0, -0.28],
+        [-0.27, 0.08],
+        [0.27, 0.08],
+      ] as const) {
+        c.moveTo(cx + x * s + s * 0.24, cy + y * s);
+        c.arc(cx + x * s, cy + y * s, s * 0.24, 0, Math.PI * 2);
+      }
+    }
+    c.moveTo(cx, cy + s * 0.05);
+    c.lineTo(cx + s * 0.18, cy + s * 0.55);
+    c.lineTo(cx - s * 0.18, cy + s * 0.55);
+  }
+  c.closePath();
+  c.fill();
+}
+
+function cardFace(rank: string, suit: Suit) {
+  const ink = suit === "heart" || suit === "diamond" ? PALE_BLUE : GOLD;
+  const map = texture(372, 528, (c) => {
+    c.fillStyle = "#161b2b";
+    c.fillRect(0, 0, 372, 528);
+    c.strokeStyle = "rgba(229, 192, 123, 0.8)";
+    c.lineWidth = 2;
+    c.strokeRect(20, 20, 332, 488);
+    c.fillStyle = ink;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    const corner = () => {
+      c.font = '600 58px Georgia, "Times New Roman", serif';
+      c.fillText(rank, 58, 70);
+      drawSuit(c, suit, 58, 124, 34);
+    };
+    corner();
+    c.save();
+    c.translate(372, 528);
+    c.rotate(Math.PI);
+    corner();
+    c.restore();
+    drawSuit(c, suit, 186, 264, 150);
+  });
+  map.repeat.set(1 / CARD_W, 1 / CARD_H);
+  map.offset.set(0.5, 0.5);
+  return map;
+}
+
+function cardBack() {
+  const map = texture(372, 528, (c) => {
+    c.fillStyle = "#0a0c13";
+    c.fillRect(0, 0, 372, 528);
+    c.save();
+    c.beginPath();
+    c.rect(26, 26, 320, 476);
+    c.clip();
+    c.strokeStyle = "rgba(229, 192, 123, 0.5)";
+    c.lineWidth = 1.5;
+    for (let i = -528; i < 900; i += 26) {
+      c.beginPath();
+      c.moveTo(i, 0);
+      c.lineTo(i + 528, 528);
+      c.moveTo(i + 528, 0);
+      c.lineTo(i, 528);
+      c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = GOLD;
+    c.lineWidth = 3;
+    c.strokeRect(26, 26, 320, 476);
+    c.fillStyle = "#0a0c13";
+    c.beginPath();
+    c.arc(186, 264, 58, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = GOLD;
+    drawSuit(c, "spade", 186, 262, 62);
+  });
+  map.repeat.set(1 / CARD_W, 1 / CARD_H);
+  map.offset.set(0.5, 0.5);
+  return map;
+}
+
+function cardOutline() {
+  const w = CARD_W / 2;
+  const h = CARD_H / 2;
+  const r = 0.045;
+  const shape = new Shape();
+  shape.moveTo(-w + r, -h);
+  shape.lineTo(w - r, -h);
+  shape.absarc(w - r, -h + r, r, -Math.PI / 2, 0, false);
+  shape.lineTo(w, h - r);
+  shape.absarc(w - r, h - r, r, 0, Math.PI / 2, false);
+  shape.lineTo(-w + r, h);
+  shape.absarc(-w + r, h - r, r, Math.PI / 2, Math.PI, false);
+  shape.lineTo(-w, -h + r);
+  shape.absarc(-w + r, -h + r, r, Math.PI, Math.PI * 1.5, false);
+  return shape;
+}
 
 interface Floater {
   node: Object3D;
@@ -124,23 +321,38 @@ interface Floater {
   bob: number;
   phase: number;
   scale: number;
+  // pointer physics: offset from home and its velocity, plus a spin kick
+  ox: number;
+  oy: number;
+  vx: number;
+  vy: number;
+  kick: number;
 }
 
-export function createGateScene(mount: HTMLElement, options: GateSceneOptions): GateScene | null {
+export function createGateScene(
+  mount: HTMLElement,
+  options: GateSceneOptions,
+): GateScene | null {
   const { mobile, reducedMotion, gates } = options;
 
   let renderer: WebGLRenderer;
   try {
-    renderer = new WebGLRenderer({ alpha: true, antialias: !mobile, powerPreference: 'high-performance' });
+    renderer = new WebGLRenderer({
+      alpha: true,
+      antialias: !mobile,
+      powerPreference: "high-performance",
+    });
   } catch {
     return null; // no WebGL — the CSS backdrop stays on its own
   }
   // No GPU, no corridor: a software rasteriser would turn every frame into
   // main-thread work. `?gl=force` overrides this for review and tests.
-  const force = window.location.search.includes('gl=force');
+  const force = window.location.search.includes("gl=force");
   const context = renderer.getContext();
-  const info = context.getExtension('WEBGL_debug_renderer_info');
-  const gpu = info ? String(context.getParameter(info.UNMASKED_RENDERER_WEBGL) ?? '') : '';
+  const info = context.getExtension("WEBGL_debug_renderer_info");
+  const gpu = info
+    ? String(context.getParameter(info.UNMASKED_RENDERER_WEBGL) ?? "")
+    : "";
   if (!force && /swiftshader|llvmpipe|software|basic render/i.test(gpu)) {
     renderer.dispose();
     return null;
@@ -151,7 +363,7 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
   mount.appendChild(renderer.domElement);
 
   const scene = new Scene();
-  scene.fog = new Fog(new Color('#07070a'), 5, 24);
+  scene.fog = new Fog(new Color("#07070a"), 5, 24);
 
   const pmrem = new PMREMGenerator(renderer);
   const environment = pmrem.fromScene(new RoomEnvironment(), 0.04);
@@ -178,6 +390,12 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     gem: new OctahedronGeometry(0.5, 0),
     orb: new SphereGeometry(0.42, 48, 32),
     pill: new CapsuleGeometry(0.2, 0.55, 8, 28),
+    cardBody: new ExtrudeGeometry(cardOutline(), {
+      depth: 0.012,
+      bevelEnabled: false,
+      curveSegments: 8,
+    }),
+    cardBack: new ShapeGeometry(cardOutline(), 8),
     gate: new TorusGeometry(3.3, 0.012, 8, 160, Math.PI * 1.72),
     halo: new TorusGeometry(3.42, 0.004, 6, 160),
     // A fat, faint, additive twin of the gate: bloom without a post pass.
@@ -188,7 +406,7 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
   const glass = (flat: boolean) =>
     mobile
       ? new MeshPhysicalMaterial({
-          color: '#7ea0ff',
+          color: "#7ea0ff",
           metalness: 0.2,
           roughness: 0.06,
           iridescence: 1,
@@ -196,7 +414,7 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
           flatShading: flat,
         })
       : new MeshPhysicalMaterial({
-          color: '#c4d4ff',
+          color: "#c4d4ff",
           transmission: 1,
           thickness: 1.1,
           ior: 1.52,
@@ -210,20 +428,64 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
         });
   const material = {
     die: dieMaterials(),
-    gold: new MeshPhysicalMaterial({ color: '#d7b26a', metalness: 1, roughness: 0.2 }),
-    chrome: new MeshPhysicalMaterial({ color: '#dfe6ff', metalness: 1, roughness: 0.05 }),
+    gold: new MeshPhysicalMaterial({
+      color: "#d7b26a",
+      metalness: 1,
+      roughness: 0.2,
+    }),
+    chrome: new MeshPhysicalMaterial({
+      color: "#dfe6ff",
+      metalness: 1,
+      roughness: 0.05,
+    }),
     gem: glass(true),
     orb: glass(false),
     anodized: new MeshPhysicalMaterial({
-      color: '#2747c9',
+      color: "#2747c9",
       metalness: 0.9,
       roughness: 0.28,
       clearcoat: 1,
       clearcoatRoughness: 0.1,
     }),
+    cardFaces: (
+      [
+        ["A", "spade"],
+        ["K", "heart"],
+        ["Q", "diamond"],
+        ["J", "club"],
+      ] as const
+    ).map(([rank, suit]) => {
+      const map = cardFace(rank, suit);
+      // The ink also glows a little, so a card reads even in the fog.
+      return new MeshPhysicalMaterial({
+        map,
+        emissive: new Color("#ffffff"),
+        emissiveMap: map,
+        emissiveIntensity: 0.35,
+        roughness: 0.38,
+        clearcoat: 1,
+        clearcoatRoughness: 0.2,
+      });
+    }),
+    cardBack: new MeshPhysicalMaterial({
+      map: cardBack(),
+      roughness: 0.38,
+      clearcoat: 1,
+      clearcoatRoughness: 0.2,
+      side: DoubleSide,
+    }),
+    cardEdge: new MeshPhysicalMaterial({
+      color: "#d7b26a",
+      metalness: 1,
+      roughness: 0.3,
+    }),
     gate: new MeshBasicMaterial({ color: BLUE }),
     gateAlt: new MeshBasicMaterial({ color: CYAN }),
-    halo: new MeshBasicMaterial({ color: '#9fb8ff', transparent: true, opacity: 0.35 }),
+    halo: new MeshBasicMaterial({
+      color: "#9fb8ff",
+      transparent: true,
+      opacity: 0.35,
+    }),
     glow: new MeshBasicMaterial({
       color: BLUE,
       transparent: true,
@@ -240,13 +502,31 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     }),
   };
 
-  const makers: (() => Mesh)[] = [
-    () => new Mesh(geometry.die, material.die),
-    () => new Mesh(geometry.gem, material.gem),
-    () => new Mesh(geometry.coin, material.gold),
-    () => new Mesh(geometry.knot, material.chrome),
-    () => new Mesh(geometry.orb, material.orb),
-    () => new Mesh(geometry.pill, material.anodized),
+  let dealt = 0;
+  const card = (): Object3D => {
+    const group = new Group();
+    const face = material.cardFaces[dealt++ % material.cardFaces.length]!;
+    group.add(new Mesh(geometry.cardBody, [face, material.cardEdge]));
+    const back = new Mesh(geometry.cardBack, material.cardBack);
+    back.position.z = -0.0008;
+    group.add(back);
+    return group;
+  };
+  const die = () => new Mesh(geometry.die, material.die);
+  const coin = () => new Mesh(geometry.coin, material.gold);
+  const gem = () => new Mesh(geometry.gem, material.gem);
+  const orb = () => new Mesh(geometry.orb, material.orb);
+  const knot = () => new Mesh(geometry.knot, material.chrome);
+  const pill = () => new Mesh(geometry.pill, material.anodized);
+
+  // The corridor plays one round, over and over: the deal, the roll, the win,
+  // and then the machinery that makes it fair. Each stretch between two gates
+  // carries the pieces of its beat.
+  const kits: (() => Object3D)[][] = [
+    [card, card, gem, card],
+    [die, die, orb, die],
+    [coin, coin, card, coin],
+    [knot, pill, orb, gem],
   ];
 
   // --- corridor ---------------------------------------------------------
@@ -254,7 +534,6 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
   const floaters: Floater[] = [];
   const rings: Group[] = [];
   const perGate = mobile ? 2 : 3;
-  let made = 0;
 
   for (let g = 0; g < gates; g++) {
     const z = -g * GATE_SPACING;
@@ -270,11 +549,13 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
 
     // The hero keeps its stage clear: the first stretch has the gate only.
     for (let i = 0; g > 0 && i < perGate; i++) {
-      const mesh = makers[made++ % makers.length]!();
+      const kit = kits[(g - 1) % kits.length]!;
+      const mesh = kit[i % kit.length]!();
       // Keep the reading column clear: objects live left and right of centre.
       const side = (g + i) % 2 ? 1 : -1;
       const x = side * (2.6 + random() * 1.8);
       const y = (random() - 0.5) * 3.2;
+      mesh.userData.x = x;
       mesh.position.set(x, y, z - 1.2 - random() * (GATE_SPACING - 2.4));
       mesh.rotation.set(random() * 6.28, random() * 6.28, random() * 6.28);
       const scale = 0.9 + random() * 0.8;
@@ -283,10 +564,19 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
       floaters.push({
         node: mesh,
         baseY: y,
-        spin: [(random() - 0.5) * 0.5, (random() - 0.5) * 0.6, (random() - 0.5) * 0.3],
+        spin: [
+          (random() - 0.5) * 0.5,
+          (random() - 0.5) * 0.6,
+          (random() - 0.5) * 0.3,
+        ],
         bob: 0.08 + random() * 0.16,
         phase: random() * 6.28,
         scale,
+        ox: 0,
+        oy: 0,
+        vx: 0,
+        vy: 0,
+        kick: 0,
       });
     }
   }
@@ -304,9 +594,9 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     dustPosition[i * 3 + 2] = 6 - random() * length;
   }
   const dustGeometry = new BufferGeometry();
-  dustGeometry.setAttribute('position', new BufferAttribute(dustPosition, 3));
+  dustGeometry.setAttribute("position", new BufferAttribute(dustPosition, 3));
   const dustMaterial = new PointsMaterial({
-    color: '#a9c1ff',
+    color: "#a9c1ff",
     size: 0.035,
     sizeAttenuation: true,
     transparent: true,
@@ -327,36 +617,42 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
   const resize = () => {
     const width = mount.clientWidth || 1;
     const height = mount.clientHeight || 1;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5) * quality);
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5) * quality,
+    );
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     // Portrait screens are narrow: pull the objects in so they stay in frame.
     spread = Math.min(1, Math.max(0.42, camera.aspect / 1.5));
-    for (const floater of floaters) {
-      const home = (floater.node.userData.x ??= floater.node.position.x) as number;
-      floater.node.position.x = home * spread;
-    }
     if (reducedMotion) render(0);
   };
 
   // --- scroll + pointer ---------------------------------------------------
   let maxScroll = 1;
   const measure = () => {
-    maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    maxScroll = Math.max(
+      1,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
   };
   let progress = 0;
   let energy = 0;
   let lastY = window.scrollY;
   let pointerX = 0;
   let pointerY = 0;
+  let pointerActive = false;
+  const click = { x: 0, y: 0, pending: false };
+  const probe = new Vector3();
   let leanX = 0;
   let leanY = 0;
   let clock = 0;
 
   const render = (dt: number) => {
     const target = Math.min(1, Math.max(0, window.scrollY / maxScroll));
-    progress += reducedMotion ? target - progress : (target - progress) * Math.min(1, dt * 5);
+    progress += reducedMotion
+      ? target - progress
+      : (target - progress) * Math.min(1, dt * 5);
     energy *= Math.max(0, 1 - dt * 2.4);
     clock += dt * (1 + energy * 3);
 
@@ -365,15 +661,57 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     camera.position.set(leanX * 0.55, leanY * 0.35, startZ - progress * travel);
     camera.rotation.set(leanY * -0.035, leanX * -0.05, leanX * -0.012);
 
+    const blast = click.pending;
+    click.pending = false;
     for (const floater of floaters) {
       const { node, spin } = floater;
-      node.rotation.x += spin[0] * dt * (1 + energy * 4);
-      node.rotation.y += spin[1] * dt * (1 + energy * 4);
+      const ahead = camera.position.z - node.position.z;
+
+      // Pointer physics in screen space: pieces drift away from the cursor and
+      // take a real kick from a click or tap, then spring back home.
+      if (ahead > 0.6 && ahead < 22) {
+        probe.copy(node.position).project(camera);
+        const dx = (probe.x - pointerX) * camera.aspect;
+        const dy = probe.y - pointerY;
+        const d = Math.hypot(dx, dy) || 0.001;
+        if (pointerActive && d < 0.38) {
+          const push = (0.38 - d) / 0.38;
+          floater.vx += (dx / d) * push * dt * 9;
+          floater.vy += (dy / d) * push * dt * 9;
+          floater.kick = Math.max(floater.kick, push * 0.6);
+        }
+        if (blast) {
+          const bx = (probe.x - click.x) * camera.aspect;
+          const by = probe.y - click.y;
+          const bd = Math.hypot(bx, by) || 0.001;
+          if (bd < 0.9) {
+            const power = (0.9 - bd) / 0.9;
+            floater.vx += (bx / bd) * power * 4.2;
+            floater.vy += (by / bd) * power * 4.2;
+            floater.kick = 1;
+          }
+        }
+      }
+      floater.vx -= floater.ox * 5 * dt;
+      floater.vy -= floater.oy * 5 * dt;
+      const drag = Math.max(0, 1 - dt * 2.6);
+      floater.vx *= drag;
+      floater.vy *= drag;
+      floater.ox += floater.vx * dt;
+      floater.oy += floater.vy * dt;
+      floater.kick *= Math.max(0, 1 - dt * 1.4);
+
+      const whirl = 1 + energy * 4 + floater.kick * 9;
+      node.rotation.x += spin[0] * dt * whirl;
+      node.rotation.y += spin[1] * dt * whirl;
       node.rotation.z += spin[2] * dt;
-      node.position.y = floater.baseY + Math.sin(clock * 0.5 + floater.phase) * floater.bob;
+      node.position.x = (node.userData.x as number) * spread + floater.ox;
+      node.position.y =
+        floater.baseY +
+        Math.sin(clock * 0.5 + floater.phase) * floater.bob +
+        floater.oy;
       // Pieces shrink away as the camera reaches them, so nothing ever fills
       // the screen in front of the text.
-      const ahead = camera.position.z - node.position.z;
       const near = Math.min(1, Math.max(0, (ahead - 1.6) / 3.2));
       node.scale.setScalar(floater.scale * near * near * (3 - 2 * near));
     }
@@ -406,7 +744,7 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
         resize();
       } else {
         cancelAnimationFrame(frame);
-        mount.style.opacity = '0';
+        mount.style.opacity = "0";
         return;
       }
     }
@@ -420,9 +758,17 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
     if (reducedMotion) render(0);
   };
   const onPointer = (event: PointerEvent) => {
-    if (event.pointerType !== 'mouse') return;
+    if (event.pointerType !== "mouse") return;
+    pointerActive = true;
     pointerX = (event.clientX / window.innerWidth - 0.5) * 2;
     pointerY = -(event.clientY / window.innerHeight - 0.5) * 2;
+  };
+  // Click or tap anywhere: a shove for whatever is near, and a surge of speed.
+  const onDown = (event: PointerEvent) => {
+    click.x = (event.clientX / window.innerWidth - 0.5) * 2;
+    click.y = -(event.clientY / window.innerHeight - 0.5) * 2;
+    click.pending = true;
+    energy = Math.min(1, energy + 0.5);
   };
 
   const mountObserver = new ResizeObserver(resize);
@@ -431,9 +777,10 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
   pageObserver.observe(document.body);
   measure();
   resize();
-  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener("scroll", onScroll, { passive: true });
   if (!reducedMotion) {
-    window.addEventListener('pointermove', onPointer, { passive: true });
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("pointerdown", onDown, { passive: true });
     frame = requestAnimationFrame(loop);
   } else {
     render(0);
@@ -444,8 +791,9 @@ export function createGateScene(mount: HTMLElement, options: GateSceneOptions): 
       cancelAnimationFrame(frame);
       mountObserver.disconnect();
       pageObserver.disconnect();
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('pointermove', onPointer);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("pointerdown", onDown);
       for (const item of Object.values(geometry)) item.dispose();
       const dispose = (entry: Material) => {
         (entry as MeshPhysicalMaterial).map?.dispose();
