@@ -6,8 +6,9 @@
   padding: clamp(80px, 11vw, 140px) var(--gutter) clamp(80px, 12vw, 140px);
 }
 
+/* Room for the title's parallax drift above the first tab. */
 .header {
-  margin-bottom: clamp(36px, 5vw, 60px);
+  margin-bottom: clamp(56px, 7vw, 92px);
 }
 
 .console {
