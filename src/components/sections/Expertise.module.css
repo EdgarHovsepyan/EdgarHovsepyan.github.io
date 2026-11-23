@@ -92,7 +92,7 @@
   top: 96px;
   min-height: clamp(420px, 60vh, 620px);
   border: 1px solid var(--line-strong);
-  border-radius: 22px;
+  border-radius: 3px;
   background: linear-gradient(155deg, rgba(22, 28, 52, 0.7), rgba(10, 11, 18, 0.72));
   overflow: hidden;
 }

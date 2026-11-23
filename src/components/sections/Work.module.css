@@ -38,7 +38,7 @@
   width: clamp(340px, 66vw, 900px);
   height: clamp(380px, 58vh, 580px);
   padding: clamp(28px, 3vw, 44px);
-  border-radius: 22px;
+  border-radius: 3px;
   border: 1px solid var(--line-strong);
   background: linear-gradient(160deg, rgba(20, 20, 26, 0.92), rgba(12, 12, 16, 0.72));
   overflow: hidden;
@@ -363,7 +363,7 @@
     left: 50%;
     width: 6px;
     height: 6px;
-    border-radius: 6px;
+    border-radius: 3px;
     background: rgba(255, 255, 255, 0.4);
     translate: -50% -50%;
     transition:
@@ -561,36 +561,6 @@
   .panel:nth-child(4) .sig::after {
     animation: none;
     transform: none;
-  }
-}
-
-
-/* Surreal blob chips: project tags slowly morph their silhouette like
-   soft melting objects — border-radius only, zero layout cost. */
-@media (prefers-reduced-motion: no-preference) {
-  .panelTags > * {
-    animation: blobMorph 9s ease-in-out infinite;
-  }
-
-  .panelTags > *:nth-child(2n) {
-    animation-delay: -3s;
-  }
-
-  .panelTags > *:nth-child(3n) {
-    animation-delay: -6s;
-  }
-}
-
-@keyframes blobMorph {
-  0%,
-  100% {
-    border-radius: 100px;
-  }
-  33% {
-    border-radius: 18px 100px 60px 100px;
-  }
-  66% {
-    border-radius: 100px 24px 100px 60px;
   }
 }
 

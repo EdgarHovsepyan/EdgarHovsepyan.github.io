@@ -247,3 +247,68 @@
     transform: scaleY(1);
   }
 }
+
+
+/* Brutal pass: the years are the loudest thing in the row, the role is set in
+   condensed capitals, and a row answers the pointer with a hard block. */
+.row {
+  grid-template-columns: minmax(180px, 0.42fr) 1fr;
+  padding-left: clamp(0px, 1.4vw, 22px);
+  transition:
+    border-color 0.3s,
+    background-color 0.3s;
+}
+
+.row:hover,
+.rowOpen {
+  background-color: rgba(77, 124, 255, 0.07);
+}
+
+.rowOpen {
+  border-top: 2px solid var(--accent);
+}
+
+.period {
+  font-family: var(--font-cond);
+  font-size: clamp(30px, 4vw, 66px);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.rowOpen .period {
+  color: var(--accent-blue-soft);
+}
+
+.index {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+}
+
+.role {
+  font-family: var(--font-cond);
+  font-size: clamp(28px, 3.6vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.005em;
+  line-height: 0.96;
+  text-transform: uppercase;
+}
+
+.toggle {
+  border-radius: 0;
+  border-width: 2px;
+}
+
+@media (max-width: 820px) {
+  .row {
+    grid-template-columns: 1fr;
+    padding-left: 0;
+  }
+
+  .period {
+    font-size: clamp(34px, 11vw, 54px);
+  }
+}

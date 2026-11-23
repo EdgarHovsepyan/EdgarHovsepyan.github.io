@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   padding: 7px 13px;
-  border-radius: 100px;
+  border-radius: 2px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.025);
   font-family: var(--font-mono);
