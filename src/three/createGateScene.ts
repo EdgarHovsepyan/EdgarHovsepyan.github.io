@@ -444,6 +444,14 @@ export function createGateScene(
       metalness: 1,
       roughness: 0.05,
     }),
+    obsidian: new MeshPhysicalMaterial({
+      color: "#0a0c14",
+      metalness: 0.35,
+      roughness: 0.12,
+      clearcoat: 1,
+      clearcoatRoughness: 0.05,
+      iridescence: 0.35,
+    }),
     gem: glass(true),
     orb: glass(false),
     anodized: new MeshPhysicalMaterial({
@@ -525,13 +533,50 @@ export function createGateScene(
   const knot = () => new Mesh(geometry.knot, material.chrome);
   const pill = () => new Mesh(geometry.pill, material.anodized);
 
-  // The corridor plays one round, over and over: the deal, the roll, the win,
-  // and then the machinery that makes it fair. Each stretch between two gates
-  // carries the pieces of its beat.
+  // Sculpted pieces (CC0 geometry from Poly Haven, see public/models/CREDITS.md)
+  // arrive after the scene is up. Each maker returns a mesh on an empty
+  // geometry that is swapped for the real one when its file lands; if a file
+  // never arrives, that piece simply stays invisible.
+  const sculpted = new Map<string, BufferGeometry>();
+  let disposed = false;
+  const sculpt = (name: string, skin: Material, size: number) => () => {
+    let shared = sculpted.get(name);
+    if (!shared) {
+      shared = new BufferGeometry();
+      sculpted.set(name, shared);
+      const target = shared;
+      void fetch(`/models/${name}.bin`)
+        .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(response.status)))
+        .then((buffer) => {
+          if (disposed) return;
+          const [vertices, indices] = new Uint32Array(buffer, 0, 2) as unknown as [number, number];
+          const normalBytes = Math.ceil((vertices * 3) / 4) * 4;
+          const positions = new Float32Array(buffer, 8, vertices * 3);
+          const normals = new Int8Array(buffer, 8 + vertices * 12, vertices * 3);
+          const index = new Uint16Array(buffer, 8 + vertices * 12 + normalBytes, indices);
+          target.setAttribute('position', new BufferAttribute(positions, 3));
+          target.setAttribute('normal', new BufferAttribute(normals, 3, true));
+          target.setIndex(new BufferAttribute(index, 1));
+          target.scale(size, size, size);
+          target.computeBoundingSphere();
+        })
+        .catch(() => undefined);
+    }
+    return new Mesh(shared, skin);
+  };
+  const knight = sculpt('knight', material.obsidian, 1.25);
+  const king = sculpt('king', material.gold, 1.45);
+  const queen = sculpt('queen', material.chrome, 1.4);
+  const goblet = sculpt('goblet', material.gold, 1.25);
+
+  // The corridor plays one round, over and over: the deal, the roll, the
+  // thinking, the win, and then the machinery that makes it fair. Each stretch
+  // between two gates carries the pieces of its beat.
   const kits: (() => Object3D)[][] = [
     [card, card, gem, card],
-    [die, die, orb, die],
-    [coin, coin, card, coin],
+    [die, orb, die, die],
+    [knight, king, queen, knight],
+    [goblet, coin, coin, card],
     [knot, pill, orb, gem],
   ];
 
@@ -846,6 +891,8 @@ export function createGateScene(
         if (Array.isArray(item)) item.forEach(dispose);
         else dispose(item);
       }
+      disposed = true;
+      for (const item of sculpted.values()) item.dispose();
       dustGeometry.dispose();
       dustMaterial.dispose();
       composer?.dispose();
