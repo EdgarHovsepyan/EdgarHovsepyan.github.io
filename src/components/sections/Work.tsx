@@ -1,13 +1,9 @@
 import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Chip } from '../ui/Chip.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { work } from '../../data/work.ts';
 import type { WorkProject } from '../../data/types.ts';
 import styles from './Work.module.css';
-
-gsap.registerPlugin(ScrollTrigger);
 
 function WorkPanel({ project, index }: { project: WorkProject; index: number }) {
   const ref = useRef<HTMLElement>(null);
@@ -61,41 +57,79 @@ function WorkPanel({ project, index }: { project: WorkProject; index: number }) 
   );
 }
 
+// Horizontal gallery driven by vertical scroll. The section is made exactly as
+// tall as the distance the track has to travel and the viewport inside it is
+// `position: sticky` — so the browser owns the pinning and it can never go stale
+// when something above changes height (the old cached-offset pin jumped whenever
+// a career row expanded). The slide itself is a native scroll-driven animation;
+// browsers without it get a rect-based scroll listener.
+const DESKTOP = '(min-width: 880px) and (prefers-reduced-motion: no-preference)';
+
 export function Work() {
   const root = useRef<HTMLElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const rootEl = root.current;
+    const viewEl = viewport.current;
     const trackEl = track.current;
-    if (!rootEl || !trackEl) return;
+    if (!rootEl || !viewEl || !trackEl) return;
 
-    const mm = gsap.matchMedia();
-    mm.add('(min-width: 880px) and (prefers-reduced-motion: no-preference)', () => {
-      const distance = () => trackEl.scrollWidth - rootEl.clientWidth;
-      gsap.to(trackEl, {
-        x: () => -distance(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: rootEl,
-          start: 'top top',
-          end: () => `+=${distance()}`,
-          scrub: 0.6,
-          pin: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-    });
+    const mq = window.matchMedia(DESKTOP);
+    const native = CSS.supports('(animation-timeline: scroll()) and (animation-range: 0% 100%)');
+    let distance = 0;
+    let frame = 0;
 
-    return () => mm.revert();
+    const apply = () => {
+      frame = 0;
+      if (!mq.matches) {
+        rootEl.style.removeProperty('--p');
+        if (!native) trackEl.style.removeProperty('translate');
+        return;
+      }
+      const rect = rootEl.getBoundingClientRect();
+      const span = rect.height - window.innerHeight;
+      const p = span > 0 ? Math.min(1, Math.max(0, -rect.top / span)) : 0;
+      // Drives the "01 — 04" counter bar; cheap, and shared by both paths.
+      rootEl.style.setProperty('--p', p.toFixed(4));
+      if (!native) trackEl.style.translate = `${(-p * distance).toFixed(1)}px 0`;
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+    const measure = () => {
+      distance = mq.matches ? Math.max(0, trackEl.scrollWidth - viewEl.clientWidth) : 0;
+      if (distance > 0) rootEl.style.setProperty('--dist', `${distance}px`);
+      else rootEl.style.removeProperty('--dist');
+      schedule();
+    };
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(trackEl);
+    ro.observe(viewEl);
+    mq.addEventListener('change', measure);
+    window.addEventListener('scroll', schedule, { passive: true });
+    measure();
+
+    return () => {
+      ro.disconnect();
+      mq.removeEventListener('change', measure);
+      window.removeEventListener('scroll', schedule);
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   return (
     <section id="work" ref={root} className={styles.section}>
-      <div className={styles.viewport}>
+      <div ref={viewport} className={styles.viewport}>
         <div className={styles.header}>
           <SectionHeader index="03" label="Selected work" title="Things I built" />
+          <div className={styles.meter} aria-hidden="true">
+            <span className={styles.meterLabel}>Scroll</span>
+            <span className={styles.meterBar} />
+            <span className={styles.meterLabel}>{`0${work.length}`}</span>
+          </div>
         </div>
         <div ref={track} className={styles.track}>
           {work.map((project, index) => (

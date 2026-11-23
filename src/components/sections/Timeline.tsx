@@ -13,7 +13,7 @@ interface RowProps {
 }
 
 function TimelineRow({ entry, index }: RowProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(index === 0);
 
   return (
     <div
@@ -22,10 +22,6 @@ function TimelineRow({ entry, index }: RowProps) {
       tabIndex={0}
       aria-expanded={open}
       aria-label={`${entry.role}, ${entry.org}, ${entry.period}`}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
-      onBlur={() => setOpen(false)}
       onClick={() => setOpen((value) => !value)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -38,7 +34,8 @@ function TimelineRow({ entry, index }: RowProps) {
         <div className={styles.period}>{entry.period}</div>
         <div className={styles.index}>{`0${index + 1}`}</div>
       </div>
-      <div>
+      <div className={styles.body}>
+        <span className={styles.toggle} aria-hidden="true" />
         <h3 className={styles.role}>{entry.role}</h3>
         <div className={styles.org}>{entry.org}</div>
         <p className={styles.desc}>{entry.description}</p>
@@ -69,9 +66,9 @@ export function Timeline() {
         <div>
           <SectionHeader index="02" label="Experience" title="Career arc" />
         </div>
-        <div className={styles.hint}>Hover a role to expand the stack &amp; achievements</div>
+        <div className={styles.hint}>Select a role to open what shipped there</div>
       </Reveal>
-      <div>
+      <div className={styles.rows}>
         {experience.map((entry, index) => (
           <TimelineRow key={entry.role} entry={entry} index={index} />
         ))}

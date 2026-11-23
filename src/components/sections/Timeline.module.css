@@ -149,8 +149,98 @@
 }
 
 
-/* Perf: skip layout/paint for this section until it nears the viewport. */
-.section {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 900px;
+/* Rows open on click / Enter, never on hover: a hover-driven height change
+   under a moving cursor made the page lurch while scrolling through. */
+.row {
+  position: relative;
+  cursor: pointer;
+}
+
+.row:hover .role {
+  color: var(--accent-blue-soft);
+}
+
+.body {
+  position: relative;
+  padding-right: 56px;
+}
+
+.toggle {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  transition:
+    border-color 0.35s,
+    rotate 0.5s var(--ease);
+}
+
+.toggle::before,
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 1px;
+  background: var(--text-secondary);
+  translate: -50% -50%;
+}
+
+.toggle::after {
+  rotate: 90deg;
+  transition: opacity 0.3s;
+}
+
+.row:hover .toggle,
+.rowOpen .toggle {
+  border-color: var(--accent);
+}
+
+.rowOpen .toggle {
+  rotate: 180deg;
+}
+
+.rowOpen .toggle::after {
+  opacity: 0;
+}
+
+/* Career spine: a hairline down the left edge that fills as the list scrolls
+   through the viewport. Decorative, so no fallback where unsupported. */
+.rows {
+  position: relative;
+}
+
+@media (min-width: 821px) and (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+    .rows {
+      view-timeline: --career block;
+    }
+
+    .rows::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(var(--gutter) * -0.5);
+      width: 1px;
+      background: linear-gradient(var(--accent), var(--accent-cyan));
+      transform-origin: top;
+      animation: spineFill linear both;
+      animation-timeline: --career;
+      animation-range: cover 15% cover 75%;
+    }
+  }
+}
+
+@keyframes spineFill {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
 }

@@ -2,7 +2,22 @@ import type { ExperienceEntry } from './types.ts';
 
 export const experience: ExperienceEntry[] = [
   {
-    period: '2024 — Now',
+    period: '2026 — Now',
+    role: 'Senior Software Engineer · Game Platform',
+    org: 'RedCore (RC Games) · RC Research team',
+    description:
+      'The platform under real-money games and the games on top of it: a standalone RNG service with verifiable fairness, the Plinko MVP, bet history on ClickHouse, Keycloak auth and GitOps delivery on Kubernetes across dev, preprod and prod.',
+    tags: ['C# / .NET', 'TypeScript', 'Kubernetes', 'Argo CD · GitOps', 'ClickHouse'],
+    highlights: [
+      'Built a standalone random-number service from design to production: token-verified API, version-pinned algorithm with golden-vector parity, no partial results under overload, CI performance gate, soak tests and deploy smoke checks on every environment',
+      'Delivered the Plinko MVP with the team: tech design and test plan, provably fair round verification by round ID, checksummed configurations, ball paths drawn from the RNG service',
+      'Stood up the bet-history stack on Kubernetes: ClickHouse, per-environment service and client deployment, session-token handoff to the game client',
+      'Hardened delivery for the group: merge trains on every repository, canary and rollback with smoke checks on prod, promotion blocked on missing or failed gates',
+      'Wrote the engineering handbook and a shared library of AI agent skills with security scanning in CI',
+    ],
+  },
+  {
+    period: '2024 — 2026',
     role: 'Senior Game Developer',
     org: 'Pascal Gaming · BetConstruct',
     description:
