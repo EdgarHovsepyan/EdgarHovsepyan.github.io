@@ -13,7 +13,7 @@ export const profile = {
   github: 'https://github.com/EdgarHovsepyan',
   linkedin: 'https://www.linkedin.com/in/edgar-hovsepyan-03044117b',
   telegram: 'https://t.me/Dev_context',
-  cv: '/Edgar_Hovsepyan_CV.pdf',
+  cv: '/cv/Edgar_Hovsepyan_CV_ATS.pdf',
   portrait: '/assets/portrait.webp',
   wordmark: '/assets/wordmark.png',
 } as const;

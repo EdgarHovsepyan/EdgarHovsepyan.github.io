@@ -1,83 +1,82 @@
 import { Reveal } from '../ui/Reveal.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
-import { cx } from '../../utils/cx.ts';
 import styles from './Resume.module.css';
 
 interface CvFile {
-  label: string;
   format: 'PDF' | 'DOCX';
-  desc: string;
+  note: string;
   href: string;
-  featured?: boolean;
 }
 
-const cvs: CvFile[] = [
-  {
-    label: 'Premium CV',
-    format: 'PDF',
-    desc: 'Designed single page, on brand. For recruiters, LinkedIn, referrals and studios directly.',
-    href: '/cv/Edgar_Hovsepyan_CV.pdf',
-    featured: true,
-  },
-  {
-    label: 'ATS CV',
-    format: 'PDF',
-    desc: 'Single column, parser friendly. For application portals and ATS screening.',
-    href: '/cv/Edgar_Hovsepyan_CV_ATS.pdf',
-  },
-  {
-    label: 'ATS CV',
-    format: 'DOCX',
-    desc: 'Word version, same content. For portals that only accept .docx.',
-    href: '/cv/Edgar_Hovsepyan_CV_ATS.docx',
-  },
-  {
-    label: 'Branded CV',
-    format: 'PDF',
-    desc: 'Light layout with accent colour that prints well.',
-    href: '/cv/Edgar_Hovsepyan_CV_Branded.pdf',
-  },
+// One CV, two containers. Both are built from the same source by
+// tools/build_cv.py, so they cannot drift apart.
+const files: CvFile[] = [
+  { format: 'PDF', note: 'For reading and for application portals', href: '/cv/Edgar_Hovsepyan_CV_ATS.pdf' },
+  { format: 'DOCX', note: 'For portals that only take Word', href: '/cv/Edgar_Hovsepyan_CV_ATS.docx' },
 ];
+
+const facts = [
+  ['Length', 'Two pages, single column'],
+  ['Updated', 'November 2026'],
+  ['Covers', 'Games, platform and tooling'],
+  ['Parsing', 'Plain text layer, standard headings'],
+];
+
+const outline = ['Summary', 'Experience', 'Selected Projects', 'Skills', 'Education', 'Awards'];
 
 export function Resume() {
   return (
     <section id="cv" className={styles.section}>
       <Reveal className={styles.header}>
-        <div>
-          <SectionHeader index="06" label="Résumé" title="Download the CV" />
-        </div>
-        <div className={styles.hint}>Pick the format for your channel</div>
+        <SectionHeader index="06" label="Résumé" title="Download the CV" />
       </Reveal>
 
-      <div className={styles.grid}>
-        {cvs.map((cv) => (
-          <Reveal key={cv.label + cv.format}>
+      <div className={styles.layout}>
+        <Reveal className={styles.desk} from="scale">
+          {files.map((file) => (
             <a
-              href={cv.href}
+              key={file.format}
+              href={file.href}
               download
-              className={cx(styles.card, cv.featured && styles.featured)}
-              aria-label={`Download ${cv.label} (${cv.format})`}
+              className={styles.sheet}
+              aria-label={`Download the CV as ${file.format}`}
             >
-              <div className={styles.top}>
-                <span className={styles.tag}>{cv.format}</span>
-                {cv.featured ? (
-                  <span className={styles.star} aria-hidden="true">
-                    ★
+              <span className={styles.scan} aria-hidden="true" />
+              <span className={styles.sheetName}>Edgar Hovsepyan</span>
+              <span className={styles.sheetRole}>Senior iGaming Engineer</span>
+              <span className={styles.rule} aria-hidden="true" />
+              <span className={styles.outline} aria-hidden="true">
+                {outline.map((item, index) => (
+                  <span key={item} className={styles.block}>
+                    <span className={styles.blockLabel}>{item}</span>
+                    <span className={styles.lines} style={{ height: `${index === 1 ? 54 : 18}px` }} />
                   </span>
-                ) : null}
-              </div>
-              <h3 className={styles.title}>{cv.label}</h3>
-              <p className={styles.desc}>{cv.desc}</p>
-              <span className={styles.dl}>
-                Download
-                <span className={styles.arrow} aria-hidden="true">
-                  ↓
+                ))}
+              </span>
+              <span className={styles.foot}>
+                <span className={styles.format}>{file.format}</span>
+                <span className={styles.note}>{file.note}</span>
+                <span className={styles.get}>
+                  Download <span aria-hidden="true">↓</span>
                 </span>
               </span>
-              <div className={styles.glow} aria-hidden="true" />
             </a>
-          </Reveal>
-        ))}
+          ))}
+        </Reveal>
+
+        <Reveal className={styles.facts} from="left">
+          <p className={styles.lead}>
+            One CV in two containers. The same two pages, as a PDF and as a Word file.
+          </p>
+          <dl className={styles.list}>
+            {facts.map(([label, value]) => (
+              <div key={label} className={styles.row}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
       </div>
     </section>
   );

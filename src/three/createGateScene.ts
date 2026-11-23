@@ -151,6 +151,18 @@ function dieMaterials() {
   });
 }
 
+/** The revolved coin, re-mapped so a flat drawing lands on each face. */
+function coinGeometry() {
+  const lathe = new LatheGeometry(COIN_PROFILE, 96);
+  const position = lathe.getAttribute('position');
+  const uv = lathe.getAttribute('uv');
+  for (let i = 0; i < position.count; i++) {
+    uv.setXY(i, position.getX(i) / 0.93 + 0.5, position.getZ(i) / 0.93 + 0.5);
+  }
+  uv.needsUpdate = true;
+  return lathe;
+}
+
 /** Coin cross-section, revolved: a raised rim around a recessed face. */
 const COIN_PROFILE = [
   [0, 0.035],
@@ -320,6 +332,51 @@ function cardOutline() {
   return shape;
 }
 
+/**
+ * Coin faces: a colour map and a height map painted from the same drawing, so
+ * the raised parts are also the brighter ones. Beaded border, a ring, a spade
+ * in the middle, and radial reeding out at the rim.
+ */
+function coinMaps() {
+  const paint = (ground: string, raised: string, recess: string) =>
+    texture(512, 512, (c) => {
+      c.fillStyle = ground;
+      c.fillRect(0, 0, 512, 512);
+      c.translate(256, 256);
+      // reeded rim
+      c.strokeStyle = raised;
+      c.lineWidth = 5;
+      for (let i = 0; i < 96; i++) {
+        const a = (i / 96) * Math.PI * 2;
+        c.beginPath();
+        c.moveTo(Math.cos(a) * 226, Math.sin(a) * 226);
+        c.lineTo(Math.cos(a) * 254, Math.sin(a) * 254);
+        c.stroke();
+      }
+      // recessed field
+      c.fillStyle = recess;
+      c.beginPath();
+      c.arc(0, 0, 172, 0, Math.PI * 2);
+      c.fill();
+      // beads
+      c.fillStyle = raised;
+      for (let i = 0; i < 44; i++) {
+        const a = (i / 44) * Math.PI * 2;
+        c.beginPath();
+        c.arc(Math.cos(a) * 156, Math.sin(a) * 156, 5.5, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.lineWidth = 4;
+      c.beginPath();
+      c.arc(0, 0, 138, 0, Math.PI * 2);
+      c.stroke();
+      drawSuit(c, 'spade', 0, -4, 150);
+    });
+  const colour = paint('#c9a45c', '#f1d18a', '#8a6a34');
+  const height = paint('#808080', '#ffffff', '#303030');
+  return { colour, height };
+}
+
 interface Floater {
   node: Object3D;
   baseY: number;
@@ -391,7 +448,7 @@ export function createGateScene(
   // read as a set rather than a toy box.
   const geometry = {
     die: new RoundedBoxGeometry(0.8, 0.8, 0.8, 5, 0.13),
-    coin: new LatheGeometry(COIN_PROFILE, 72),
+    coin: coinGeometry(),
     knot: new TorusKnotGeometry(0.34, 0.115, 180, 28),
     gem: new OctahedronGeometry(0.5, 0),
     orb: new SphereGeometry(0.42, 48, 32),
@@ -444,6 +501,16 @@ export function createGateScene(
       metalness: 1,
       roughness: 0.05,
     }),
+    coin: (() => {
+      const { colour, height } = coinMaps();
+      return new MeshPhysicalMaterial({
+        map: colour,
+        bumpMap: height,
+        bumpScale: 2.4,
+        metalness: 1,
+        roughness: 0.24,
+      });
+    })(),
     obsidian: new MeshPhysicalMaterial({
       color: "#0a0c14",
       metalness: 0.35,
@@ -527,7 +594,7 @@ export function createGateScene(
     return group;
   };
   const die = () => new Mesh(geometry.die, material.die);
-  const coin = () => new Mesh(geometry.coin, material.gold);
+  const coin = () => new Mesh(geometry.coin, material.coin);
   const gem = () => new Mesh(geometry.gem, material.gem);
   const orb = () => new Mesh(geometry.orb, material.orb);
   const knot = () => new Mesh(geometry.knot, material.chrome);
@@ -646,6 +713,27 @@ export function createGateScene(
       });
     }
   }
+
+  // Finale: past the last gate the round ends on a full hand. A ring of cards
+  // turns slowly around the trophy, waiting behind the contact section.
+  const finale = new Group();
+  const hand = new Group();
+  const handSize = mobile ? 5 : 7;
+  for (let i = 0; i < handSize; i++) {
+    const angle = (i / handSize) * Math.PI * 2;
+    const piece = card();
+    piece.position.set(Math.cos(angle) * 1.75, Math.sin(angle) * 1.75, 0);
+    piece.rotation.set(0.25, 0.35, angle - Math.PI / 2);
+    piece.scale.setScalar(0.95);
+    hand.add(piece);
+  }
+  const trophy = goblet();
+  trophy.scale.setScalar(1.7);
+  const crown = new Mesh(geometry.halo, material.gate);
+  crown.scale.setScalar(0.72);
+  finale.add(hand, trophy, crown);
+  finale.position.set(0, 0, -(gates - 1) * GATE_SPACING - 3.6);
+  scene.add(finale);
 
   // Dust: thousands of motes down the whole corridor. They carry the sense of
   // speed and depth for almost nothing — one draw call.
@@ -807,6 +895,9 @@ export function createGateScene(
       rings[i]!.rotation.z += dt * (i % 2 ? -0.05 : 0.05) * (1 + energy * 6);
     }
     dust.rotation.z += dt * 0.012;
+    hand.rotation.z += dt * (0.12 + energy * 0.9);
+    trophy.rotation.y += dt * 0.5;
+    finale.position.x = 1.9 * (spread - 0.42) * 1.72;
     draw();
   };
 

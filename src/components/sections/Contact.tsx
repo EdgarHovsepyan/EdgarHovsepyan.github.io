@@ -99,6 +99,16 @@ export function Contact() {
           </div>
         </Reveal>
       </div>
+      {/* The closing line of the page, set huge and outlined, drifting past. */}
+      <div className={styles.band} aria-hidden="true">
+        <div className={styles.bandTrack}>
+          {[0, 1].map((copy) => (
+            <span key={copy} className={styles.bandCopy}>
+              Games <i>✦</i> Platform <i>✦</i> Tooling <i>✦</i> Let’s build <i>✦</i>{' '}
+            </span>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

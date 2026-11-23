@@ -193,3 +193,52 @@
     transform: translate(-50%, calc(-50% - 16px + var(--py, 0px)));
   }
 }
+
+
+/* Closing band: one line of outlined display type crossing the full width. */
+.band {
+  position: relative;
+  z-index: 1;
+  margin: clamp(48px, 7vw, 100px) calc(var(--gutter) * -1) 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.bandTrack {
+  display: flex;
+  width: max-content;
+}
+
+.bandCopy {
+  flex: none;
+  padding-right: 0.3em;
+  font-family: var(--font-cond);
+  font-size: clamp(72px, 15vw, 240px);
+  font-weight: 900;
+  line-height: 0.95;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(159, 184, 255, 0.55);
+}
+
+.bandCopy i {
+  font-style: normal;
+  font-size: 0.4em;
+  vertical-align: middle;
+  color: var(--gold);
+  -webkit-text-stroke: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bandTrack {
+    animation: band 38s linear infinite;
+  }
+}
+
+@keyframes band {
+  to {
+    transform: translateX(-50%);
+  }
+}
