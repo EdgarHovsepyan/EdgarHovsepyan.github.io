@@ -77,6 +77,18 @@
   --card-accent: #5be49b;
   --card-accent-2: #22d3ee;
 }
+.panel:nth-child(5) {
+  --card-accent: #a78bfa;
+  --card-accent-2: #4d7cff;
+}
+.panel:nth-child(6) {
+  --card-accent: #e5c07b;
+  --card-accent-2: #f0ede7;
+}
+.panel:nth-child(7) {
+  --card-accent: #5be49b;
+  --card-accent-2: #4d7cff;
+}
 
 /* Generative art wash — a per-card mesh in its own accent, drifts opposite the
    cursor (deepest layer). */
